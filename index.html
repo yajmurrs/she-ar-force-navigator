@@ -1,0 +1,1145 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="description" content="She'ar Force: a scroll-driven film of the lunar south pole. See when the Sun and Earth clear the terrain at three sample sites. NASA Space Apps Challenge 2026 research prototype."><meta name="theme-color" content="#03050a">
+<title>She'ar Force Navigator</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Inter:wght@300;400;500&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Concept: a film you scroll. Black cold open, a descent onto the Moon's south pole, then a pinned first-person horizon where the real Sun and Earth tracks move behind a skyline built from the data, then three verdict posters. */
+:root{
+  color-scheme:dark;
+  --bg:#03050a; --ink:#eef3fb; --ink2:#aab7ca; --mut:#6f8099; --line:rgba(170,190,220,.18);
+  --sun:#ffb84d; --earth:#5aaeff; --both:#4fe0b0; --bad:#ff7a66;
+  --fd:"Barlow Condensed","Arial Narrow",Impact,system-ui,sans-serif;
+  --fb:"Inter",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --fm:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box}
+html{background:var(--bg);scroll-padding-top:0}
+body{margin:0;background:var(--bg);color:var(--ink);font:300 16px/1.65 var(--fb);overflow-x:hidden;-webkit-text-size-adjust:100%}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);background:var(--bg);z-index:60}
+h1,h2,h3,p{margin:0}
+a{color:var(--earth)}
+button{font:inherit;color:inherit}
+a:focus-visible,button:focus-visible{outline:2px solid var(--ink);outline-offset:3px}
+.mono{font-family:var(--fm);font-variant-numeric:tabular-nums}
+#stars{position:fixed;inset:0;width:100%;height:100%;z-index:0;pointer-events:none}
+.vig{position:fixed;inset:0;z-index:40;pointer-events:none;background:radial-gradient(ellipse at 50% 45%,transparent 55%,rgba(0,0,0,.55) 100%)}
+section{position:relative;z-index:1}
+.full{width:100%}
+
+/* nav */
+.nav{position:fixed;top:env(safe-area-inset-top,0px);left:0;right:0;z-index:50;display:flex;align-items:center;gap:22px;padding:16px max(20px,env(safe-area-inset-right,0px)) 16px max(20px,env(safe-area-inset-left,0px));pointer-events:none}
+.nav>*{pointer-events:auto}
+.brand{font:600 15px/1 var(--fd);letter-spacing:.28em;color:var(--ink);text-decoration:none;text-transform:uppercase}
+.nav .links{display:flex;gap:20px;margin-left:auto}
+.nav .links a{font:500 11px/1 var(--fm);letter-spacing:.14em;text-transform:uppercase;color:var(--ink2);text-decoration:none}
+.nav .links a:hover{color:var(--ink)}
+.chk{white-space:nowrap;font:400 10.5px/1 var(--fm);color:var(--mut);letter-spacing:.06em}
+.chk::before{content:"";display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--both);margin-right:7px}
+.chk.no::before{background:var(--bad)}
+
+/* cold open */
+.cold{height:100vh;height:100dvh;min-height:560px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;position:relative;padding-inline:max(20px,env(safe-area-inset-left,0px))}
+.cold .kick{font:400 11px/1.6 var(--fm);letter-spacing:.34em;text-transform:uppercase;color:var(--ink2);opacity:0;animation:fade 2s .3s forwards}
+.cold h1{font:600 clamp(44px,9.6vw,150px)/.95 var(--fd);letter-spacing:.34em;padding-left:.34em;max-width:100%;text-transform:uppercase;opacity:0;animation:title 3.2s .6s cubic-bezier(.2,.7,.2,1) forwards;text-shadow:0 0 60px rgba(120,170,255,.25)}
+.cold .tag{margin-top:26px;max-width:34ch;font:300 clamp(16px,2.2vw,22px)/1.5 var(--fb);color:var(--ink2);opacity:0;animation:fade 2.4s 2s forwards}
+.cue{position:absolute;left:50%;bottom:max(28px,env(safe-area-inset-bottom,0px));transform:translateX(-50%);font:400 10.5px/1 var(--fm);letter-spacing:.3em;color:var(--mut);text-transform:uppercase;display:flex;flex-direction:column;align-items:center;gap:12px;opacity:0;animation:fade 2s 3.2s forwards}
+.cue i{display:block;width:1px;height:44px;background:linear-gradient(var(--ink2),transparent);animation:drip 2.2s infinite}
+@keyframes fade{to{opacity:1}}
+@keyframes title{from{opacity:0;letter-spacing:.7em;filter:blur(10px)}to{opacity:1;letter-spacing:.34em;filter:blur(0)}}
+@keyframes drip{0%{transform:scaleY(0);transform-origin:top}50%{transform:scaleY(1);transform-origin:top}51%{transform-origin:bottom}100%{transform:scaleY(0);transform-origin:bottom}}
+
+/* pinned scenes */
+.track{position:relative}
+.stage{position:sticky;top:0;height:100vh;height:100dvh;overflow:hidden}
+.stage canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+.beat{position:absolute;left:max(8px,4vw);right:max(8px,4vw);bottom:15vh;max-width:760px;opacity:0;will-change:opacity,transform;pointer-events:none}
+.beat .k{font:400 11px/1.4 var(--fm);letter-spacing:.3em;text-transform:uppercase;color:var(--earth)}
+.beat h2{font:600 clamp(36px,6.2vw,84px)/1 var(--fd);letter-spacing:.02em;text-transform:uppercase;margin-top:12px;text-wrap:balance}
+.beat p{margin-top:14px;font-size:clamp(15px,1.7vw,19px);color:var(--ink2);max-width:46ch}
+.beat.c{left:0;right:0;margin:0 auto;text-align:center;bottom:auto;top:30vh}
+.beat.c p{margin-left:auto;margin-right:auto}
+.pin{position:absolute;opacity:0;transform:translate(-50%,-50%);pointer-events:none;text-align:center}
+.pin i{display:block;width:16px;height:16px;border-radius:50%;border:2px solid var(--ink);margin:0 auto 8px;box-shadow:0 0 0 0 rgba(255,255,255,.5);animation:ping 2.4s infinite}
+.pin b{font:600 18px/1 var(--fd);letter-spacing:.2em;display:block}
+.pin span{font:400 10.5px/1.4 var(--fm);color:var(--ink2);letter-spacing:.06em}
+@keyframes ping{0%{box-shadow:0 0 0 0 rgba(255,255,255,.45)}80%,100%{box-shadow:0 0 0 22px rgba(255,255,255,0)}}
+.schem{position:absolute;right:max(16px,3vw);top:86px;font:400 10px/1.4 var(--fm);color:var(--mut);letter-spacing:.1em;text-align:right;opacity:0}
+
+/* HUD */
+.hud{position:absolute;inset:0;pointer-events:none;padding:76px max(8px,4vw) max(22px,env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;justify-content:space-between}
+.hud button{pointer-events:auto}
+.hud-top{display:flex;gap:14px 24px;justify-content:space-between;align-items:flex-start;flex-wrap:wrap}
+.chap{font:400 10.5px/1.5 var(--fm);letter-spacing:.24em;text-transform:uppercase;color:var(--ink2)}
+.pills{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+.pills button{all:unset;box-sizing:border-box;cursor:pointer;pointer-events:auto;padding:9px 15px;border:1px solid var(--line);border-radius:99px;font:500 12px/1 var(--fm);letter-spacing:.1em;color:var(--ink2);background:rgba(3,5,10,.5);backdrop-filter:blur(6px)}
+.pills button:hover{color:var(--ink);border-color:var(--ink2)}
+.pills button[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.pills button:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+.clock{font:500 clamp(18px,2.6vw,30px)/1 var(--fm);letter-spacing:.04em;text-align:right}
+.clock small{display:block;font:400 10px/1 var(--fm);letter-spacing:.2em;color:var(--mut);margin-top:8px;text-transform:uppercase}
+.hud-bot{display:grid;gap:14px}
+.status{font:600 clamp(28px,5vw,64px)/1 var(--fd);letter-spacing:.04em;text-transform:uppercase}
+.status small{display:block;font:400 11px/1.5 var(--fm);letter-spacing:.14em;color:var(--ink2);margin-top:10px;text-transform:none;max-width:70ch}
+.reads{display:flex;gap:10px 30px;flex-wrap:wrap;font:400 12px/1.2 var(--fm)}
+.reads div{display:flex;gap:10px;align-items:baseline;white-space:nowrap}
+.reads i{width:9px;height:9px;border-radius:50%;display:inline-block}
+.reads b{font-weight:500}
+.tl{display:grid;grid-template-columns:auto minmax(0,1fr);gap:6px 16px;align-items:center}
+.tl button{all:unset;box-sizing:border-box;cursor:pointer;pointer-events:auto;padding:10px 16px;border:1px solid var(--line);border-radius:99px;font:500 11px/1 var(--fm);letter-spacing:.14em;text-transform:uppercase;background:rgba(3,5,10,.5);backdrop-filter:blur(6px);color:var(--ink)}
+.tl button:hover{border-color:var(--ink2)}
+.tlbar{position:relative;height:28px;cursor:pointer;pointer-events:auto;touch-action:none}
+.tlbar svg{display:block;width:100%;height:100%}
+.tlcap{grid-column:2;display:flex;justify-content:space-between;font:400 10px/1 var(--fm);color:var(--mut);letter-spacing:.08em}
+.lanes{position:absolute;left:0;bottom:calc(100% + 2px);display:none}
+.hint{font:400 10.5px/1.5 var(--fm);letter-spacing:.14em;color:var(--mut);text-transform:uppercase}
+
+/* verdict */
+.verdict{padding-block:14vh 4vh}
+.vh{text-align:center;max-width:760px;margin:0 auto 10vh}
+.vh .k{font:400 11px/1.4 var(--fm);letter-spacing:.3em;text-transform:uppercase;color:var(--earth)}
+.vh h2{font:600 clamp(38px,7vw,96px)/1 var(--fd);text-transform:uppercase;margin-top:14px;text-wrap:balance}
+.vh p{margin-top:16px;color:var(--ink2);font-size:18px}
+.poster{max-width:1100px;margin:0 auto 12vh;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);gap:clamp(20px,5vw,70px);align-items:center;border-top:1px solid var(--line);padding-top:6vh}
+.poster .big{font:600 clamp(76px,13vw,190px)/.82 var(--fd);white-space:nowrap;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.poster .big sup{font-size:.28em;letter-spacing:0;vertical-align:top;position:relative;top:.12em;margin-left:.08em;color:var(--ink2)}
+.poster .cap{font:400 11px/1.4 var(--fm);letter-spacing:.24em;text-transform:uppercase;color:var(--ink2);margin-top:14px}
+.poster h3{font:600 clamp(28px,4vw,48px)/1.02 var(--fd);text-transform:uppercase;letter-spacing:.02em;text-wrap:balance}
+.poster .site{font:500 12px/1.4 var(--fm);letter-spacing:.2em;text-transform:uppercase;color:var(--ink2);margin-bottom:12px}
+.poster .txt{margin-top:14px;color:var(--ink2);max-width:46ch}
+.poster .bars{display:grid;gap:10px;margin-top:22px}
+.br{display:grid;grid-template-columns:50px minmax(0,1fr) 56px;gap:12px;align-items:center;font:400 12px/1 var(--fm);color:var(--ink2)}
+.br .t{height:8px;background:rgba(170,190,220,.12);border-radius:0 4px 4px 0;overflow:hidden}
+.br .t i{display:block;height:100%;width:0;transition:width 1.8s cubic-bezier(.2,.7,.2,1);border-radius:0 4px 4px 0}
+.in .br .t i{width:var(--w)}
+.br strong{font-weight:500;color:var(--ink);text-align:right}
+.strip{margin-top:20px}
+.strip svg{display:block;width:100%;height:12px;border-radius:2px}
+.strip .cl{display:block;height:100%;transform-origin:left;transform:scaleX(0);transition:transform 2.2s .3s cubic-bezier(.2,.7,.2,1)}
+.in .strip .cl{transform:scaleX(1)}
+.strip small{display:flex;justify-content:space-between;font:400 10px/1 var(--fm);color:var(--mut);margin-top:6px;letter-spacing:.06em}
+.rv{opacity:0;transform:translateY(26px);transition:opacity 1.2s,transform 1.2s cubic-bezier(.2,.7,.2,1)}
+.in.rv,.in .rv{opacity:1;transform:none}
+
+/* notes */
+.notes{max-width:1100px;margin:0 auto;padding-block:8vh 10vh}
+.notes h2{font:600 clamp(32px,5vw,60px)/1 var(--fd);text-transform:uppercase}
+.notes .k{font:400 11px/1.4 var(--fm);letter-spacing:.3em;text-transform:uppercase;color:var(--earth);margin-bottom:14px}
+.ng{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px 60px;margin-top:34px}
+.ng h3{font:600 20px/1 var(--fd);letter-spacing:.14em;text-transform:uppercase;margin-bottom:12px}
+.ng ul{margin:0;padding-left:18px;display:grid;gap:10px;color:var(--ink2);font-size:14.5px}
+.ng li::marker{color:var(--mut)}
+.src{display:grid;gap:8px;font-size:14.5px}
+.fin{margin-top:60px;padding-top:22px;border-top:1px solid var(--line);color:var(--mut);font:400 11px/1.7 var(--fm);letter-spacing:.04em;max-width:100ch}
+
+@media (max-width:820px){
+  .poster{grid-template-columns:1fr}
+  .ng{grid-template-columns:1fr}
+  .nav .links{display:none}
+  .nav .chk{display:none}
+  .beat{bottom:12vh}
+  .hud{padding-top:64px}
+  .tl{grid-template-columns:1fr}
+  .tlcap{grid-column:1}
+}
+@media (prefers-reduced-motion:reduce){
+  .cold .kick,.cold h1,.cold .tag,.cue{animation:none;opacity:1}
+  .cue i{animation:none}
+  .rv{opacity:1;transform:none;transition:none}
+  .br .t i,.strip .cl{transition:none}
+  .pin i{animation:none}
+}
+
+/* ADDITIVE MODULE: custom coordinate explorer; cinematic engine unchanged. */
+.cx{position:relative;z-index:2;padding:12vh max(20px,env(safe-area-inset-left,0px)) 12vh;background:linear-gradient(180deg,transparent,rgba(17,28,45,.33) 45%,transparent)}
+.cx-wrap{max-width:1100px;margin:auto;border-top:1px solid var(--line);padding-top:32px}
+.cx-eyebrow{font:400 11px/1.5 var(--fm);letter-spacing:.3em;color:var(--earth);text-transform:uppercase}
+.cx-head{font:600 clamp(42px,8vw,100px)/.95 var(--fd);letter-spacing:.025em;text-transform:uppercase;margin:18px 0 22px;max-width:16ch}
+.cx-intro{max-width:65ch;color:var(--ink2);font-size:16px}
+.cx-console{margin-top:42px;padding:clamp(22px,3vw,40px);border:1px solid rgba(137,166,205,.28);background:linear-gradient(130deg,rgba(14,24,42,.9),rgba(4,9,18,.9));box-shadow:0 20px 80px rgba(0,0,0,.2)}
+.cx-top{display:flex;gap:16px;justify-content:space-between;flex-wrap:wrap;align-items:baseline;border-bottom:1px solid var(--line);padding-bottom:18px;margin-bottom:24px}
+.cx-serial{font:400 11px/1.6 var(--fm);color:var(--mut);letter-spacing:.1em}
+.cx-inputs{display:grid;grid-template-columns:1fr 1fr auto;gap:15px;align-items:end}
+.cx-field label{display:block;color:var(--ink2);font:400 11px/1.6 var(--fm);letter-spacing:.11em;text-transform:uppercase;margin-bottom:8px}
+.cx-field input{display:block;width:100%;min-width:0;padding:13px 14px;color:var(--ink);font:400 16px/1.3 var(--fm);border:1px solid rgba(170,190,220,.3);background:#090f1b;border-radius:2px;outline-offset:3px}
+.cx-field input:focus-visible{border-color:var(--earth);outline:1px solid var(--earth)}
+.cx-go,.cx-presets button{border:1px solid rgba(170,190,220,.35);background:rgba(90,174,255,.12);cursor:pointer;border-radius:2px}
+.cx-go{min-height:49px;padding:0 24px;font:500 12px/1 var(--fm);letter-spacing:.12em;text-transform:uppercase;white-space:nowrap}
+.cx-go:hover,.cx-presets button:hover{border-color:var(--earth);color:white;background:rgba(90,174,255,.2)}
+.cx-presets{display:flex;flex-wrap:wrap;gap:10px;margin:20px 0 0;align-items:center}
+.cx-presets span{font:400 10px/1.5 var(--fm);color:var(--mut);letter-spacing:.1em;text-transform:uppercase;margin-right:5px}
+.cx-presets button{padding:7px 13px;font:400 11px/1.3 var(--fm)}
+.cx-results{border-top:1px solid var(--line);margin-top:28px;padding-top:26px;min-height:160px}
+.cx-state{font:500 11px/1.4 var(--fm);letter-spacing:.17em;color:var(--earth);text-transform:uppercase}
+.cx-results h3{font:600 clamp(24px,3.2vw,39px)/1.1 var(--fd);text-transform:uppercase;letter-spacing:.04em;margin:12px 0 12px}
+.cx-results p{max-width:76ch;color:var(--ink2);font-size:14px;line-height:1.75;margin:8px 0}
+.cx-figs{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:18px 0}
+.cx-figs>div{padding:14px;border:1px solid var(--line);background:rgba(170,190,220,.035)}
+.cx-figs b{display:block;font:600 clamp(24px,3vw,38px)/1 var(--fd);color:var(--ink);font-variant-numeric:tabular-nums}
+.cx-figs span{display:block;font:400 10px/1.5 var(--fm);color:var(--ink2);margin-top:9px;letter-spacing:.07em;text-transform:uppercase}
+.cx-caution{border-left:2px solid var(--sun);padding:10px 0 10px 15px;color:var(--ink2)!important}
+.cx-small{margin-top:18px!important;font:400 11px/1.7 var(--fm)!important;color:var(--mut)!important}
+@media(max-width:700px){.cx-inputs{grid-template-columns:1fr 1fr}.cx-go{grid-column:1/-1}.cx-figs{gap:6px}.cx-figs>div{padding:9px}.cx-figs b{font-size:25px}}
+@media(max-width:380px){.cx-inputs{grid-template-columns:1fr}.cx-figs{grid-template-columns:1fr}}
+
+/* CINEMATIC LAYER: global film treatment plus full-screen verdict, coordinate and notes scenes. The cold open, the descent and the horizon scene are untouched. */
+.grain{position:fixed;inset:-50%;width:200%;height:200%;z-index:41;pointer-events:none;opacity:.075;mix-blend-mode:overlay;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='220' height='220'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 .9 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");animation:grain 1.1s steps(6) infinite}
+@keyframes grain{0%{transform:translate(0,0)}17%{transform:translate(-3%,2%)}33%{transform:translate(2%,-4%)}50%{transform:translate(-4%,-1%)}67%{transform:translate(3%,3%)}83%{transform:translate(-1%,4%)}100%{transform:translate(0,0)}}
+.reel{position:fixed;left:0;top:0;height:2px;width:100%;z-index:70;transform-origin:left;transform:scaleX(0);background:linear-gradient(90deg,var(--earth),var(--both),var(--sun));box-shadow:0 0 12px rgba(90,174,255,.6);pointer-events:none}
+.tc{position:fixed;right:max(20px,env(safe-area-inset-right,0px));bottom:max(16px,env(safe-area-inset-bottom,0px));z-index:50;font:400 10px/1 var(--fm);letter-spacing:.22em;color:var(--mut);text-transform:uppercase;pointer-events:none;display:flex;gap:12px;align-items:center;opacity:0;transition:opacity .8s}
+.tc.on{opacity:1}
+.tc i{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--bad);animation:rec 1.6s infinite}
+@keyframes rec{50%{opacity:.15}}
+.bar{position:fixed;left:0;right:0;height:0;background:#000;z-index:55;pointer-events:none;transition:height 1.6s cubic-bezier(.2,.7,.2,1)}
+.bar.t{top:0}.bar.b{bottom:0}
+body.cine-in .bar{height:clamp(14px,3.4vh,40px)}
+body.cine-in .nav{top:calc(env(safe-area-inset-top,0px) + clamp(14px,3.4vh,40px))}
+body.cine-in .tc{bottom:calc(max(16px,env(safe-area-inset-bottom,0px)) + clamp(14px,3.4vh,40px))}
+body.cine-in .cue{bottom:calc(max(28px,env(safe-area-inset-bottom,0px)) + clamp(14px,3.4vh,40px))}
+
+/* verdict: three full-screen scenes */
+.verdict{padding-block:0 4vh}
+.vh{min-height:100vh;min-height:100svh;display:flex;flex-direction:column;justify-content:center;align-items:center;margin:0 auto;position:relative}
+.vh::before,.vh::after{content:"";position:absolute;left:50%;width:1px;height:14vh;background:linear-gradient(transparent,var(--ink2));opacity:.5}
+.vh::before{top:0}.vh::after{bottom:0;transform:scaleY(-1)}
+.vh h2{letter-spacing:.02em;filter:blur(14px);opacity:0;transform:scale(1.06);transition:filter 1.8s,opacity 1.8s,letter-spacing 2.4s cubic-bezier(.2,.7,.2,1),transform 2.4s cubic-bezier(.2,.7,.2,1)}
+.vh.in h2{filter:blur(0);opacity:1;transform:none;letter-spacing:.1em}
+.vh h2::after{content:"";display:block;height:1px;width:0;margin:26px auto 0;background:linear-gradient(90deg,transparent,var(--earth),transparent);box-shadow:0 0 18px var(--earth);transition:width 2.4s .5s cubic-bezier(.2,.7,.2,1)}
+.vh.in h2::after{width:min(520px,70vw)}
+.poster{position:relative;max-width:none;width:100%;margin:0;min-height:100vh;min-height:100svh;border-top:0;padding:10vh max(16px,4vw);overflow:hidden;isolation:isolate;--tint:79,224,176}
+.poster:nth-of-type(1){--tint:79,224,176}
+.poster::before{content:"";position:absolute;inset:-20% -10%;z-index:-2;background:radial-gradient(ellipse 60% 50% at var(--gx,30%) 50%,rgba(var(--tint),.2),transparent 70%),radial-gradient(ellipse 80% 60% at 80% 90%,rgba(90,174,255,.09),transparent 70%);opacity:0;transition:opacity 2s}
+.poster.in::before{opacity:1}
+.poster::after{content:"";position:absolute;left:0;right:0;top:50%;height:2px;z-index:-1;transform:scaleX(0);background:linear-gradient(90deg,transparent,rgba(var(--tint),.9),transparent);box-shadow:0 0 40px 6px rgba(var(--tint),.35);opacity:.0}
+.poster.in::after{animation:flare 2.8s .2s cubic-bezier(.2,.7,.2,1) forwards}
+@keyframes flare{0%{transform:scaleX(0);opacity:0}35%{transform:scaleX(1);opacity:.9}100%{transform:scaleX(1);opacity:.0}}
+.poster>div{width:100%;max-width:520px;justify-self:center}
+.poster .big{font-size:clamp(88px,17vw,260px);will-change:transform;text-shadow:0 0 80px rgba(var(--tint),.3)}
+.poster h3{letter-spacing:.04em}
+.poster.rv{opacity:0;transform:none;filter:blur(8px);transition:opacity 1.6s,filter 1.8s}
+.poster.in.rv{opacity:1;filter:none}
+@media (min-width:821px){.poster{grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);gap:clamp(20px,6vw,100px);align-content:center}.poster:nth-of-type(even){direction:rtl}.poster:nth-of-type(even)>div{direction:ltr}}
+.poster .cap{margin-top:18px}
+
+/* coordinate explorer and notes: full-screen scenes with a scan line */
+.cx{min-height:100vh;min-height:100svh;display:flex;align-items:center;background:radial-gradient(ellipse 70% 60% at 50% 50%,rgba(34,60,100,.34),transparent 72%)}
+.cx-wrap{width:100%;border-top:0}
+.cx-console{position:relative;overflow:hidden;backdrop-filter:blur(8px)}
+.cx-console::after{content:"";position:absolute;left:0;right:0;top:-30%;height:30%;pointer-events:none;background:linear-gradient(transparent,rgba(90,174,255,.07),transparent);animation:scan 6s linear infinite}
+@keyframes scan{to{top:130%}}
+.cx-head{opacity:0;filter:blur(12px);transform:translateY(24px);transition:opacity 1.6s,filter 1.6s,transform 1.6s cubic-bezier(.2,.7,.2,1)}
+.cx.in .cx-head,.notes.in h2{opacity:1;filter:none;transform:none}
+.cx-eyebrow,.cx-intro,.cx-console,.cx-small{opacity:0;transform:translateY(18px);transition:opacity 1.4s .2s,transform 1.4s .2s cubic-bezier(.2,.7,.2,1)}
+.cx.in .cx-eyebrow,.cx.in .cx-intro,.cx.in .cx-console,.cx.in .cx-small{opacity:1;transform:none}
+.cx.in .cx-intro{transition-delay:.45s}.cx.in .cx-console{transition-delay:.7s}.cx.in .cx-small{transition-delay:1s}
+.notes{min-height:100vh;min-height:100svh;display:flex;flex-direction:column;justify-content:center}
+.notes h2{opacity:0;filter:blur(10px);transform:translateY(20px);transition:opacity 1.5s,filter 1.5s,transform 1.5s cubic-bezier(.2,.7,.2,1)}
+.ng>div{opacity:0;transform:translateY(22px);transition:opacity 1.2s,transform 1.2s cubic-bezier(.2,.7,.2,1)}
+.notes.in .ng>div{opacity:1;transform:none}
+.notes.in .ng>div:nth-child(2){transition-delay:.15s}.notes.in .ng>div:nth-child(3){transition-delay:.3s}.notes.in .ng>div:nth-child(4){transition-delay:.45s}
+.credits{display:none}
+.end{text-align:center;padding:16vh 20px 22vh;position:relative;z-index:2}
+.end b{display:block;font:600 clamp(34px,7vw,92px)/1 var(--fd);letter-spacing:.34em;padding-left:.34em;text-transform:uppercase;text-shadow:0 0 60px rgba(120,170,255,.25)}
+.end span{display:block;margin-top:18px;font:400 11px/1.8 var(--fm);letter-spacing:.3em;text-transform:uppercase;color:var(--mut)}
+@media (max-width:820px){.tc{display:none}.poster{padding-block:12vh}}
+@media (prefers-reduced-motion:reduce){
+  .grain{animation:none}.cx-console::after,.tc i{animation:none}
+  .vh h2,.cx-head,.cx-eyebrow,.cx-intro,.cx-console,.cx-small,.notes h2,.ng>div,.poster.rv{opacity:1;filter:none;transform:none;transition:none}
+  .vh h2{letter-spacing:.1em}.vh h2::after{width:min(520px,70vw);transition:none}.poster::before{opacity:1;transition:none}.poster.in::after{animation:none}
+}
+
+/* NAVIGATION: clickable data check, mobile menu, working scroll cue */
+button.chk{all:unset;box-sizing:border-box;cursor:pointer;pointer-events:auto;white-space:nowrap;font:400 10.5px/1 var(--fm);color:var(--mut);letter-spacing:.06em;padding:9px 13px;border:1px solid transparent;border-radius:99px;transition:color .2s,border-color .2s}
+button.chk:hover,button.chk[aria-expanded="true"]{color:var(--ink);border-color:var(--line)}
+button.chk:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+.nav .menu{all:unset;box-sizing:border-box;display:none;margin-left:auto;cursor:pointer;pointer-events:auto;padding:10px 16px;border:1px solid var(--line);border-radius:99px;font:500 11px/1 var(--fm);letter-spacing:.16em;text-transform:uppercase;color:var(--ink);background:rgba(3,5,10,.5);backdrop-filter:blur(6px)}
+.nav .menu:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+.nav .links a.on{color:var(--ink);box-shadow:0 1px 0 var(--earth)}
+.nav .links a{padding-bottom:5px}
+@media (max-width:980px){.nav .links,.nav .chk{display:none!important}.nav .menu{display:inline-block}}
+.chkpanel{position:fixed;right:max(20px,env(safe-area-inset-right,0px));top:calc(env(safe-area-inset-top,0px) + 58px);z-index:52;width:min(400px,calc(100vw - 32px));padding:18px 18px 16px;border:1px solid rgba(137,166,205,.28);background:linear-gradient(130deg,rgba(14,24,42,.97),rgba(4,9,18,.97));backdrop-filter:blur(10px);box-shadow:0 20px 80px rgba(0,0,0,.45)}
+body.cine-in .chkpanel{top:calc(env(safe-area-inset-top,0px) + 58px + clamp(14px,3.4vh,40px))}
+.chkpanel[hidden],.mmenu[hidden]{display:none}
+.chkpanel .k{font:500 11px/1.4 var(--fm);letter-spacing:.2em;text-transform:uppercase;color:var(--both);margin:0 0 12px}
+.chkpanel .k.no{color:var(--bad)}
+.chkpanel ul{list-style:none;margin:0;padding:0;display:grid;gap:9px}
+.chkpanel li{display:grid;grid-template-columns:62px 1fr auto;gap:2px 10px;align-items:baseline;font:400 11px/1.5 var(--fm);color:var(--ink2);padding-bottom:9px;border-bottom:1px solid var(--line)}
+.chkpanel li b{font-weight:500;color:var(--ink)}
+.chkpanel li span:nth-of-type(2){grid-column:2/3;grid-row:2;color:var(--mut)}
+.chkpanel li i{font-style:normal;grid-row:1;grid-column:3}
+.chkpanel li i.ok{color:var(--both)}.chkpanel li i.no{color:var(--bad)}
+.chkpanel .t{margin:12px 0;font-size:12.5px;line-height:1.6;color:var(--ink2)}
+.chkpanel button{all:unset;box-sizing:border-box;cursor:pointer;font:500 11px/1 var(--fm);letter-spacing:.12em;text-transform:uppercase;color:var(--earth);padding:6px 0;border-bottom:1px solid var(--earth)}
+.chkpanel button:focus-visible{outline:2px solid var(--ink);outline-offset:3px}
+.mmenu{position:fixed;inset:0;z-index:49;display:flex;flex-direction:column;justify-content:center;gap:4px;padding:80px max(28px,env(safe-area-inset-left,0px)) 40px;background:rgba(3,5,10,.95);backdrop-filter:blur(12px)}
+.mmenu a{font:600 clamp(34px,11vw,60px)/1.18 var(--fd);letter-spacing:.14em;text-transform:uppercase;color:var(--ink);text-decoration:none}
+.mmenu a:hover,.mmenu a:focus-visible{color:var(--earth)}
+.mmenu .mchk{all:unset;box-sizing:border-box;cursor:pointer;margin-top:24px;font:400 11px/1.4 var(--fm);letter-spacing:.2em;text-transform:uppercase;color:var(--ink2);border-bottom:1px solid var(--line);align-self:flex-start;padding-bottom:6px}
+.mmenu .mchk:focus-visible{outline:2px solid var(--ink);outline-offset:3px}
+.cue{pointer-events:auto;cursor:pointer;transition:color .2s}
+.cue:hover,.cue:focus-visible{color:var(--ink)}
+.cue:focus-visible{outline:2px solid var(--ink);outline-offset:8px}
+
+/* COORDINATE EXPLORER: results */
+.cx-go:disabled{opacity:.55;cursor:progress}
+.cx-results{transition:border-color .6s}
+.cx-results[data-k="m"]{border-top-color:rgba(79,224,176,.55)}
+.cx-results[data-k="h"]{border-top-color:rgba(255,184,77,.55)}
+.cx-results[data-k="n"]{border-top-color:rgba(255,122,102,.55)}
+.cx-state.m{color:var(--both)}.cx-state.h{color:var(--sun)}.cx-state.n{color:var(--bad)}
+.cx-res{animation:cxin .9s cubic-bezier(.2,.7,.2,1)}
+@keyframes cxin{from{opacity:0;transform:translateY(14px);filter:blur(6px)}to{opacity:1;transform:none;filter:none}}
+.cx-scan{display:grid;gap:14px;min-height:160px;align-content:center;justify-items:start}
+.cx-scan b{font:500 11px/1 var(--fm);letter-spacing:.2em;color:var(--earth);text-transform:uppercase}
+.cx-scan span{font:400 11px/1.5 var(--fm);color:var(--mut);letter-spacing:.06em}
+.cx-scan i{display:block;position:relative;overflow:hidden;height:2px;width:100%;max-width:420px;background:rgba(170,190,220,.14)}
+.cx-scan i::after{content:"";position:absolute;top:0;bottom:0;left:0;width:40%;background:linear-gradient(90deg,transparent,var(--earth),transparent);animation:cxbar .9s linear infinite}
+@keyframes cxbar{from{transform:translateX(-100%)}to{transform:translateX(260%)}}
+.cx-grid{display:grid;grid-template-columns:minmax(0,220px) minmax(0,1fr);gap:clamp(18px,3vw,36px);align-items:start;margin-top:6px}
+.cx-radar{display:block;width:100%;max-width:220px;height:auto}
+.rd-sq{fill:rgba(90,174,255,.06);stroke:rgba(170,190,220,.45);stroke-width:1}
+.rd-g{stroke:rgba(170,190,220,.14);stroke-width:1;stroke-dasharray:2 4}
+.rd-l{stroke:var(--sun);stroke-width:1;stroke-dasharray:3 3;opacity:.75}
+.rd-ref{fill:var(--both)}
+.rd-pt{fill:var(--sun)}
+.rd-ping{fill:none;stroke:var(--sun);stroke-width:1.5;transform-box:fill-box;transform-origin:center;animation:rdping 2.2s infinite}
+.cx-radar.m .rd-pt{fill:var(--both)}.cx-radar.m .rd-ping{stroke:var(--both)}
+@keyframes rdping{0%{transform:scale(1);opacity:.9}100%{transform:scale(4.5);opacity:0}}
+.rd-t{fill:var(--mut);font:400 9px var(--fm)}
+.cx-radcap{font:400 10px/1.5 var(--fm)!important;color:var(--mut)!important;letter-spacing:.08em;margin:6px 0 0!important}
+.cx-facts{display:grid;grid-template-columns:1fr 1fr;gap:12px 22px;margin-top:16px}
+.cx-facts span{display:block;font:400 10px/1.5 var(--fm);letter-spacing:.1em;text-transform:uppercase;color:var(--mut)}
+.cx-facts b{display:block;font:400 13.5px/1.5 var(--fb);color:var(--ink);margin-top:2px}
+.cx-figs em{display:block;font:400 10.5px/1.4 var(--fm);font-style:normal;color:var(--mut);margin-top:6px}
+.cx-figs .s b{color:var(--sun)}.cx-figs .e b{color:var(--earth)}.cx-figs .b b{color:var(--both)}
+.cx-lane{display:grid;grid-template-columns:48px minmax(0,1fr);gap:12px;align-items:center;margin:7px 0}
+.cx-lane span{font:400 10.5px/1 var(--fm);color:var(--ink2);letter-spacing:.08em}
+.cx-lane svg{display:block;width:100%;height:8px;transform-origin:left;animation:cxlane 1.6s .15s cubic-bezier(.2,.7,.2,1) both}
+@keyframes cxlane{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+.cx-lanecap{display:flex;justify-content:space-between;margin:2px 0 0 60px;font:400 10px/1 var(--fm);color:var(--mut);letter-spacing:.08em}
+.cx-legend2{display:flex;gap:18px;flex-wrap:wrap;margin:12px 0 0 60px;font:400 10px/1 var(--fm);color:var(--mut);letter-spacing:.06em}
+.cx-legend2 span{display:inline-flex;align-items:center}
+.lg{display:inline-block;width:16px;height:6px;margin-right:7px;background:var(--ink2)}
+.lg.s1{opacity:.4}.lg.s0{background:rgba(170,190,220,.14)}
+.cx-near{list-style:none;margin:18px 0 0;padding:0;display:grid;gap:8px}
+.cx-near li{display:grid;grid-template-columns:70px minmax(0,1.4fr) minmax(0,.8fr) minmax(0,1fr);gap:4px 14px;padding:10px 12px;border:1px solid var(--line);background:rgba(170,190,220,.035);font:400 11.5px/1.5 var(--fm);color:var(--ink2)}
+.cx-near li b{font-weight:500;color:var(--ink)}
+.cx-near li span:last-child{color:var(--bad)}
+.cx-legend{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:16px}
+.cx-legend>div{padding:12px 14px;border:1px solid var(--line);border-left-width:2px;background:rgba(170,190,220,.035)}
+.cx-legend .m{border-left-color:var(--both)}.cx-legend .h{border-left-color:var(--sun)}.cx-legend .n{border-left-color:var(--bad)}
+.cx-legend b{display:block;font:500 11px/1.4 var(--fm);letter-spacing:.14em;text-transform:uppercase;color:var(--ink)}
+.cx-legend span{display:block;margin-top:6px;font-size:12.5px;line-height:1.55;color:var(--ink2)}
+@media (max-width:700px){
+  .cx-grid{grid-template-columns:1fr}
+  .cx-radwrap{max-width:220px}
+  .cx-facts{grid-template-columns:1fr}
+  .cx-legend{grid-template-columns:1fr}
+  .cx-near li{grid-template-columns:70px minmax(0,1fr)}
+  .cx-lanecap,.cx-legend2{margin-left:0}
+}
+@media (prefers-reduced-motion:reduce){.cx-res,.cx-lane svg,.rd-ping,.cx-scan i::after{animation:none}}
+
+</style>
+
+</head><body>
+<canvas id="stars" aria-hidden="true"></canvas>
+<div class="vig" aria-hidden="true"></div>
+<div class="grain" aria-hidden="true"></div>
+<div class="reel" id="reel" aria-hidden="true"></div>
+<div class="bar t" aria-hidden="true"></div><div class="bar b" aria-hidden="true"></div>
+<div class="tc mono" id="tc" aria-hidden="true"><i></i><span id="tcT">REEL 00:00</span></div>
+
+<nav class="nav" aria-label="Chapters">
+  <a class="brand" href="#top">She'ar Force</a>
+  <div class="links"><a href="#descent">Descent</a><a href="#view">The view</a><a href="#verdict">Verdict</a><a href="#coordinates">Coordinates</a><a href="#notes">Notes</a></div>
+  <button class="chk" id="chk" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="chkPanel">checking data</button>
+  <button class="menu" id="menuBtn" type="button" aria-expanded="false" aria-controls="mMenu">Menu</button>
+</nav>
+<div class="chkpanel" id="chkPanel" role="dialog" aria-label="Data check details" hidden></div>
+<div class="mmenu" id="mMenu" hidden>
+  <a href="#descent" data-go="descent">Descent</a><a href="#view" data-go="view">The view</a><a href="#verdict" data-go="verdict">Verdict</a><a href="#coordinates" data-go="coordinates">Coordinates</a><a href="#notes" data-go="notes">Notes</a>
+  <button type="button" class="mchk" data-open-check>Data check details</button>
+</div>
+
+<section id="top" class="cold full">
+  <p class="kick">NASA Space Apps Challenge 2026 · Lunar Landing Site Navigator</p>
+  <h1>She'ar Force</h1>
+  <p class="tag">Where on the Moon can you see both the Sun and Earth?</p>
+  <div class="cue" aria-hidden="true">Scroll to descend<i></i></div>
+</section>
+
+<section id="descent" class="track full" style="height:380vh">
+  <div class="stage">
+    <canvas id="cv1" aria-hidden="true"></canvas>
+    <div class="beat" id="b1"><p class="k">Chapter 01 · Arrival</p><h2>A world of long shadows</h2><p>We are heading for the lunar south pole, where sunlight arrives almost sideways.</p></div>
+    <div class="beat" id="b2"><p class="k">The Sun is low</p><h2>It never climbs above 7°</h2><p id="b2t"></p></div>
+    <div class="beat" id="b3"><p class="k">The question</p><h2>Three sites. 721 hours each.</h2><p>From each one, is the Sun above the ridge? Is Earth? Both at once?</p></div>
+    <div class="pin" id="p0"><i></i><b>MM-01</b><span>Mons Mouton</span></div>
+    <div class="pin" id="p1"><i></i><b>MMP-02</b><span>Mons Mouton Plateau</span></div>
+    <div class="pin" id="p2"><i></i><b>NR-03</b><span>Nobile Rim 1 vicinity</span></div>
+    <div class="schem" id="schem">The marker positions are schematic</div>
+  </div>
+</section>
+
+<section id="view" class="track full" style="height:760vh">
+  <div class="stage">
+    <canvas id="cv2" role="img" aria-label="First-person horizon: the Sun and Earth move behind the terrain skyline over 30 days"></canvas>
+    <div class="hud">
+      <div class="hud-top">
+        <div>
+          <p class="chap">Chapter 02 · The view from the surface</p>
+          <div class="pills" id="pills" role="group" aria-label="Site"></div>
+        </div>
+        <div class="clock mono" id="clock"></div>
+      </div>
+      <div class="hud-bot">
+        <div class="status" id="status"></div>
+        <div class="reads" id="reads"></div>
+        <div class="tl">
+          <button id="play" type="button">Play the month</button>
+          <div class="tlbar" id="tlbar" aria-label="Timeline. Click to jump."></div>
+          <div class="tlcap"><span>Nov 14</span><span>Scroll, drag the bar, or press play</span><span>Dec 14</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="verdict" class="verdict full" style="padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))">
+  <div class="vh rv"><p class="k">Chapter 03 · Verdict</p><h2>What each site could see</h2><p>This is the share of the 30 days in which the center of each body stood above the terrain skyline. The values come from hourly samples and a single model.</p></div>
+  <div id="posters"></div>
+</section>
+
+
+<!-- ADDITIVE MODULE: no changes to the descent, view, or verdict scenes. -->
+<section id="coordinates" class="cx full" aria-labelledby="cx-title">
+ <div class="cx-wrap">
+  <p class="cx-eyebrow">Chapter 04 · Coordinate explorer</p>
+  <h2 id="cx-title" class="cx-head">Enter the lunar surface</h2>
+  <p class="cx-intro">Enter a latitude and a longitude. If the point lies inside one of the three Artemis III terrain patches we collected, the explorer gives a hypothetical estimate built from that patch's measured Sun, Earth and skyline data. For every other coordinate, it reports that sufficient data could not be provided.</p>
+  <div class="cx-console">
+   <div class="cx-top"><strong class="cx-eyebrow">Surface coordinate scan</strong><span class="cx-serial">MOON · SOUTH POLAR DEM · EXPERIMENTAL</span></div>
+   <form id="cx-form" novalidate>
+    <div class="cx-inputs">
+     <div class="cx-field"><label for="cx-lat">Latitude (degrees)</label><input id="cx-lat" type="number" step="any" min="-90" max="90" value="-85.4" required inputmode="decimal"></div>
+     <div class="cx-field"><label for="cx-lon">East longitude (0–360°)</label><input id="cx-lon" type="number" step="any" min="0" max="360" value="31.7" required inputmode="decimal"></div>
+     <button class="cx-go" id="cx-go" type="button">Analyze location ↗</button>
+    </div>
+   </form>
+   <div class="cx-presets"><span>Reference points</span><button type="button" data-cx-site="MM-01">MM-01</button><button type="button" data-cx-site="MMP-02">MMP-02</button><button type="button" data-cx-site="NR-03">NR-03</button></div>
+   <div class="cx-results" id="cx-results" role="status" aria-live="polite"></div>
+  </div>
+  <p class="cx-small">Coverage is an approximate local 2 × 2 km footprint centered on each sample. It is not an Artemis III landing-region polygon. For arbitrary coordinates, no terrain horizon, Horizons ephemeris, landing-safety or communications prediction is calculated.</p>
+ </div>
+</section>
+
+<section id="notes" class="notes" style="padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))">
+  <p class="k">Mission notes</p>
+  <h2>Read before you quote us</h2>
+  <div class="ng">
+    <div>
+      <h3>What this is</h3>
+      <ul>
+        <li>The directions to the Sun and Earth come from NASA/JPL Horizons. They are sampled once an hour, from 14 Nov to 14 Dec 2026 (UTC).</li>
+        <li>The terrain skyline comes from a LOLA elevation model: 20 m resolution in the near field and 80 m in the far field. The first 40 m around the observer are left out.</li>
+        <li>A body counts as visible when the center of its disc is above that skyline.</li>
+        <li>A teammate prepared the hourly records, and this page reads them as supplied.</li>
+      </ul>
+    </div>
+    <div>
+      <h3>What it is not</h3>
+      <ul>
+        <li>This is not a prediction of continuous sunlight, power, a radio link or a safe landing. It is not a NASA product.</li>
+        <li>The Sun and Earth are treated as points. Disc size, eclipses and link budgets are not modeled.</li>
+        <li>The three places are research samples. In the source data, region boundaries and landing safety are marked as unverified.</li>
+        <li>NR-03 shows Earth in 0 of 721 hours. The skyline toward Earth sits between 16.6° and 17.7°, while Earth peaks at only 9.7°. This result needs independent verification.</li>
+        <li>On screen, the skyline is rebuilt from the samples along the Sun and Earth tracks, and the gaps are interpolated. Elevation is exaggerated, and the nearer foreground ridges are illustrative only.</li>
+        <li id="sensLi">Nearest-pixel and bilinear terrain sampling produce different results.</li>
+      </ul>
+    </div>
+    <div>
+      <h3>NASA data and resources</h3>
+      <div class="src">
+        <a href="https://ssd-api.jpl.nasa.gov/doc/horizons.html" target="_blank" rel="noopener">JPL Horizons API</a>
+        <a href="https://pgda.gsfc.nasa.gov/products/78" target="_blank" rel="noopener">NASA PGDA: LOLA south-polar topography</a>
+        <a href="https://imbrium.mit.edu/" target="_blank" rel="noopener">LOLA archive (PDS Geosciences Node)</a>
+        <a href="https://trek.nasa.gov/moon/" target="_blank" rel="noopener">NASA Moon Trek</a>
+        <a href="https://www.spaceappschallenge.org/2026/challenges/lunar-landing-site-navigator/" target="_blank" rel="noopener">The challenge</a>
+      </div>
+    </div>
+    <div>
+      <h3>Use of artificial intelligence</h3>
+      <ul>
+        <li>This website was designed and coded with Claude (Anthropic) using the team's data.</li>
+        <li>The earlier prototype and data-processing code were written with ChatGPT (OpenAI).</li>
+        <li>The site contains no AI-generated images or video. Every frame is drawn live from the data.</li>
+        <li>The team checks the data and the claims. NASA and USGS are data sources only and do not endorse this project.</li>
+      </ul>
+    </div>
+  </div>
+  <p class="fin">SHE'AR FORCE · independent student team · NASA Space Apps Challenge 2026 · research prototype, not a certified landing-site or communications assessment.</p>
+</section>
+
+<div class="end" id="end"><b>She'ar Force</b><span>End of transmission · NASA Space Apps Challenge 2026</span></div>
+
+<script>
+(function(){
+"use strict";
+const D={"n":721,"sites":{"MM-01":{"name":"Mons Mouton sample","lat":-85.4,"lon":31.7,"h20":6457.8625,"slope":4.0497,"slopeMax":4.7226,"span":7.2632,"sunEl":[1.158,1.198,1.239,1.28,1.32,1.361,1.402,1.442,1.483,1.524,1.565,1.605,1.646,1.687,1.727,1.768,1.809,1.849,1.89,1.93,1.971,2.012,2.052,2.092,2.133,2.173,2.213,2.254,2.294,2.334,2.374,2.414,2.454,2.494,2.534,2.573,2.613,2.652,2.692,2.731,2.771,2.81,2.849,2.888,2.927,2.965,3.004,3.042,3.081,3.119,3.157,3.195,3.233,3.271,3.309,3.346,3.384,3.421,3.458,3.495,3.532,3.568,3.605,3.641,3.677,3.713,3.749,3.784,3.82,3.855,3.89,3.925,3.96,3.994,4.029,4.063,4.097,4.13,4.164,4.197,4.23,4.263,4.296,4.328,4.361,4.393,4.424,4.456,4.487,4.519,4.549,4.58,4.61,4.641,4.671,4.7,4.73,4.759,4.788,4.817,4.845,4.873,4.901,4.929,4.956,4.983,5.01,5.037,5.063,5.089,5.115,5.14,5.165,5.19,5.215,5.239,5.263,5.287,5.31,5.334,5.356,5.379,5.401,5.423,5.445,5.466,5.487,5.508,5.528,5.549,5.568,5.588,5.607,5.626,5.644,5.662,5.68,5.698,5.715,5.732,5.749,5.765,5.781,5.796,5.811,5.826,5.841,5.855,5.869,5.883,5.896,5.909,5.921,5.933,5.945,5.957,5.968,5.979,5.989,5.999,6.009,6.018,6.027,6.036,6.044,6.052,6.06,6.067,6.074,6.081,6.087,6.093,6.098,6.103,6.108,6.113,6.117,6.12,6.124,6.127,6.129,6.131,6.133,6.135,6.136,6.137,6.137,6.137,6.137,6.136,6.135,6.134,6.132,6.13,6.128,6.125,6.122,6.118,6.114,6.11,6.106,6.101,6.095,6.09,6.083,6.077,6.07,6.063,6.056,6.048,6.04,6.031,6.022,6.013,6.004,5.994,5.983,5.973,5.962,5.95,5.939,5.927,5.914,5.902,5.888,5.875,5.861,5.847,5.833,5.818,5.803,5.787,5.772,5.756,5.739,5.722,5.705,5.688,5.67,5.652,5.634,5.615,5.596,5.577,5.557,5.537,5.517,5.496,5.475,5.454,5.432,5.41,5.388,5.366,5.343,5.32,5.297,5.273,5.249,5.225,5.2,5.175,5.15,5.125,5.099,5.073,5.047,5.021,4.994,4.967,4.939,4.912,4.884,4.856,4.828,4.799,4.77,4.741,4.711,4.682,4.652,4.622,4.591,4.561,4.53,4.499,4.468,4.436,4.404,4.372,4.34,4.307,4.275,4.242,4.209,4.175,4.142,4.108,4.074,4.04,4.006,3.971,3.937,3.902,3.867,3.831,3.796,3.76,3.724,3.688,3.652,3.616,3.579,3.543,3.506,3.469,3.432,3.395,3.357,3.32,3.282,3.244,3.206,3.168,3.13,3.091,3.053,3.014,2.976,2.937,2.898,2.859,2.82,2.78,2.741,2.702,2.662,2.622,2.583,2.543,2.503,2.463,2.423,2.383,2.343,2.302,2.262,2.222,2.181,2.141,2.1,2.06,2.019,1.978,1.938,1.897,1.856,1.815,1.775,1.734,1.693,1.652,1.611,1.57,1.529,1.488,1.447,1.407,1.366,1.325,1.284,1.243,1.202,1.161,1.121,1.08,1.039,0.998,0.958,0.917,0.877,0.836,0.796,0.755,0.715,0.675,0.634,0.594,0.554,0.514,0.474,0.434,0.394,0.355,0.315,0.276,0.236,0.197,0.158,0.119,0.079,0.041,0.002,-0.037,-0.075,-0.114,-0.152,-0.19,-0.228,-0.266,-0.304,-0.342,-0.379,-0.417,-0.454,-0.491,-0.528,-0.565,-0.601,-0.638,-0.674,-0.71,-0.746,-0.782,-0.817,-0.853,-0.888,-0.923,-0.958,-0.992,-1.027,-1.061,-1.095,-1.129,-1.163,-1.196,-1.229,-1.262,-1.295,-1.328,-1.36,-1.392,-1.424,-1.456,-1.488,-1.519,-1.55,-1.581,-1.611,-1.642,-1.672,-1.701,-1.731,-1.76,-1.789,-1.818,-1.847,-1.875,-1.903,-1.931,-1.958,-1.986,-2.013,-2.039,-2.066,-2.092,-2.118,-2.143,-2.169,-2.194,-2.219,-2.243,-2.267,-2.291,-2.315,-2.338,-2.361,-2.384,-2.406,-2.428,-2.45,-2.471,-2.492,-2.513,-2.534,-2.554,-2.574,-2.594,-2.613,-2.632,-2.65,-2.669,-2.687,-2.704,-2.722,-2.739,-2.756,-2.772,-2.788,-2.804,-2.819,-2.834,-2.849,-2.863,-2.877,-2.891,-2.904,-2.917,-2.93,-2.942,-2.954,-2.966,-2.977,-2.988,-2.998,-3.009,-3.019,-3.028,-3.037,-3.046,-3.055,-3.063,-3.07,-3.078,-3.085,-3.092,-3.098,-3.104,-3.11,-3.115,-3.12,-3.124,-3.129,-3.132,-3.136,-3.139,-3.142,-3.144,-3.146,-3.148,-3.149,-3.15,-3.151,-3.151,-3.151,-3.151,-3.15,-3.149,-3.147,-3.145,-3.143,-3.14,-3.137,-3.134,-3.13,-3.126,-3.122,-3.117,-3.112,-3.106,-3.101,-3.094,-3.088,-3.081,-3.074,-3.066,-3.058,-3.05,-3.041,-3.032,-3.023,-3.013,-3.003,-2.992,-2.982,-2.971,-2.959,-2.947,-2.935,-2.923,-2.91,-2.897,-2.883,-2.869,-2.855,-2.841,-2.826,-2.811,-2.795,-2.779,-2.763,-2.747,-2.73,-2.713,-2.695,-2.677,-2.659,-2.641,-2.622,-2.603,-2.584,-2.564,-2.544,-2.524,-2.503,-2.482,-2.461,-2.439,-2.417,-2.395,-2.373,-2.35,-2.327,-2.304,-2.28,-2.256,-2.232,-2.208,-2.183,-2.158,-2.133,-2.107,-2.081,-2.055,-2.029,-2.002,-1.975,-1.948,-1.92,-1.892,-1.864,-1.836,-1.808,-1.779,-1.75,-1.721,-1.691,-1.662,-1.632,-1.601,-1.571,-1.54,-1.509,-1.478,-1.447,-1.415,-1.384,-1.352,-1.319,-1.287,-1.254,-1.221,-1.188,-1.155,-1.122,-1.088,-1.054,-1.02,-0.986,-0.952,-0.917,-0.882,-0.847,-0.812,-0.777,-0.741,-0.706,-0.67,-0.634,-0.598,-0.562,-0.525,-0.489,-0.452,-0.415,-0.378,-0.341,-0.304,-0.266,-0.229,-0.191,-0.154,-0.116,-0.078,-0.04,-0.001,0.037,0.075,0.114,0.153,0.191,0.23,0.269,0.308,0.347,0.386,0.425,0.465,0.504,0.544,0.583,0.623,0.662,0.702,0.742,0.781,0.821,0.861,0.901,0.941,0.981,1.021,1.061,1.101,1.141,1.181,1.221,1.261,1.302,1.342,1.382],"sunAz":[95.0,94.5,94.0,93.5,93.0,92.5,92.0,91.5,91.0,90.5,90.0,89.5,89.0,88.4,87.9,87.4,86.9,86.4,85.9,85.4,84.9,84.4,83.9,83.4,82.9,82.4,81.9,81.4,80.9,80.3,79.8,79.3,78.8,78.3,77.8,77.3,76.8,76.3,75.8,75.3,74.8,74.3,73.8,73.3,72.8,72.2,71.7,71.2,70.7,70.2,69.7,69.2,68.7,68.2,67.7,67.2,66.7,66.2,65.7,65.2,64.6,64.1,63.6,63.1,62.6,62.1,61.6,61.1,60.6,60.1,59.6,59.1,58.6,58.1,57.6,57.0,56.5,56.0,55.5,55.0,54.5,54.0,53.5,53.0,52.5,52.0,51.5,51.0,50.5,49.9,49.4,48.9,48.4,47.9,47.4,46.9,46.4,45.9,45.4,44.9,44.4,43.9,43.3,42.8,42.3,41.8,41.3,40.8,40.3,39.8,39.3,38.8,38.3,37.8,37.3,36.7,36.2,35.7,35.2,34.7,34.2,33.7,33.2,32.7,32.2,31.7,31.2,30.6,30.1,29.6,29.1,28.6,28.1,27.6,27.1,26.6,26.1,25.6,25.1,24.5,24.0,23.5,23.0,22.5,22.0,21.5,21.0,20.5,20.0,19.5,19.0,18.4,17.9,17.4,16.9,16.4,15.9,15.4,14.9,14.4,13.9,13.4,12.9,12.3,11.8,11.3,10.8,10.3,9.8,9.3,8.8,8.3,7.8,7.3,6.8,6.2,5.7,5.2,4.7,4.2,3.7,3.2,2.7,2.2,1.7,1.2,0.6,0.1,359.6,359.1,358.6,358.1,357.6,357.1,356.6,356.1,355.6,355.1,354.5,354.0,353.5,353.0,352.5,352.0,351.5,351.0,350.5,350.0,349.5,349.0,348.4,347.9,347.4,346.9,346.4,345.9,345.4,344.9,344.4,343.9,343.4,342.9,342.3,341.8,341.3,340.8,340.3,339.8,339.3,338.8,338.3,337.8,337.3,336.8,336.3,335.7,335.2,334.7,334.2,333.7,333.2,332.7,332.2,331.7,331.2,330.7,330.2,329.7,329.2,328.6,328.1,327.6,327.1,326.6,326.1,325.6,325.1,324.6,324.1,323.6,323.1,322.6,322.1,321.6,321.0,320.5,320.0,319.5,319.0,318.5,318.0,317.5,317.0,316.5,316.0,315.5,315.0,314.5,314.0,313.4,312.9,312.4,311.9,311.4,310.9,310.4,309.9,309.4,308.9,308.4,307.9,307.4,306.9,306.4,305.9,305.4,304.8,304.3,303.8,303.3,302.8,302.3,301.8,301.3,300.8,300.3,299.8,299.3,298.8,298.3,297.8,297.3,296.8,296.3,295.8,295.2,294.7,294.2,293.7,293.2,292.7,292.2,291.7,291.2,290.7,290.2,289.7,289.2,288.7,288.2,287.7,287.2,286.7,286.2,285.7,285.2,284.6,284.1,283.6,283.1,282.6,282.1,281.6,281.1,280.6,280.1,279.6,279.1,278.6,278.1,277.6,277.1,276.6,276.1,275.6,275.1,274.6,274.1,273.5,273.0,272.5,272.0,271.5,271.0,270.5,270.0,269.5,269.0,268.5,268.0,267.5,267.0,266.5,266.0,265.5,265.0,264.5,264.0,263.5,263.0,262.5,261.9,261.4,260.9,260.4,259.9,259.4,258.9,258.4,257.9,257.4,256.9,256.4,255.9,255.4,254.9,254.4,253.9,253.4,252.9,252.4,251.9,251.3,250.8,250.3,249.8,249.3,248.8,248.3,247.8,247.3,246.8,246.3,245.8,245.3,244.8,244.3,243.8,243.3,242.8,242.3,241.7,241.2,240.7,240.2,239.7,239.2,238.7,238.2,237.7,237.2,236.7,236.2,235.7,235.2,234.7,234.2,233.7,233.2,232.6,232.1,231.6,231.1,230.6,230.1,229.6,229.1,228.6,228.1,227.6,227.1,226.6,226.1,225.6,225.1,224.5,224.0,223.5,223.0,222.5,222.0,221.5,221.0,220.5,220.0,219.5,219.0,218.5,218.0,217.5,216.9,216.4,215.9,215.4,214.9,214.4,213.9,213.4,212.9,212.4,211.9,211.4,210.9,210.4,209.8,209.3,208.8,208.3,207.8,207.3,206.8,206.3,205.8,205.3,204.8,204.3,203.8,203.3,202.7,202.2,201.7,201.2,200.7,200.2,199.7,199.2,198.7,198.2,197.7,197.2,196.6,196.1,195.6,195.1,194.6,194.1,193.6,193.1,192.6,192.1,191.6,191.1,190.6,190.0,189.5,189.0,188.5,188.0,187.5,187.0,186.5,186.0,185.5,185.0,184.5,183.9,183.4,182.9,182.4,181.9,181.4,180.9,180.4,179.9,179.4,178.9,178.3,177.8,177.3,176.8,176.3,175.8,175.3,174.8,174.3,173.8,173.3,172.8,172.2,171.7,171.2,170.7,170.2,169.7,169.2,168.7,168.2,167.7,167.2,166.7,166.1,165.6,165.1,164.6,164.1,163.6,163.1,162.6,162.1,161.6,161.1,160.6,160.0,159.5,159.0,158.5,158.0,157.5,157.0,156.5,156.0,155.5,155.0,154.5,153.9,153.4,152.9,152.4,151.9,151.4,150.9,150.4,149.9,149.4,148.9,148.4,147.9,147.3,146.8,146.3,145.8,145.3,144.8,144.3,143.8,143.3,142.8,142.3,141.8,141.3,140.7,140.2,139.7,139.2,138.7,138.2,137.7,137.2,136.7,136.2,135.7,135.2,134.7,134.1,133.6,133.1,132.6,132.1,131.6,131.1,130.6,130.1,129.6,129.1,128.6,128.1,127.6,127.0,126.5,126.0,125.5,125.0,124.5,124.0,123.5,123.0,122.5,122.0,121.5,121.0,120.5,120.0,119.4,118.9,118.4,117.9,117.4,116.9,116.4,115.9,115.4,114.9,114.4,113.9,113.4,112.9,112.4,111.9,111.3,110.8,110.3,109.8,109.3,108.8,108.3,107.8,107.3,106.8,106.3,105.8,105.3,104.8,104.3,103.8,103.3,102.7,102.2,101.7,101.2,100.7,100.2,99.7,99.2,98.7,98.2,97.7,97.2,96.7,96.2,95.7,95.2,94.7,94.1,93.6,93.1,92.6,92.1,91.6,91.1,90.6,90.1],"sunHz":[-0.012,-0.053,-0.095,-0.128,-0.161,-0.18,-0.198,-0.216,-0.233,-0.25,-0.267,-0.283,-0.301,-0.329,-0.357,-0.384,-0.397,-0.319,-0.228,-0.07,0.086,0.23,0.369,0.489,0.606,0.714,0.814,0.893,0.961,1.005,1.044,1.072,1.096,1.113,1.121,1.111,1.11,1.123,1.133,1.14,1.15,1.165,1.179,1.194,1.206,1.217,1.218,1.211,1.222,1.25,1.259,1.254,1.248,1.241,1.231,1.218,1.199,1.178,1.172,1.174,1.153,1.122,1.116,1.121,1.125,1.129,1.1,1.063,0.996,0.923,0.907,0.903,0.9,0.897,0.89,0.882,0.875,0.868,0.901,0.936,0.956,0.975,0.993,1.01,1.005,0.999,0.964,0.925,0.845,0.766,0.697,0.64,0.655,0.668,0.666,0.662,0.649,0.637,0.627,0.611,0.575,0.535,0.484,0.441,0.417,0.387,0.347,0.325,0.333,0.337,0.334,0.327,0.317,0.314,0.321,0.32,0.313,0.289,0.248,0.198,0.139,0.068,-0.012,-0.088,-0.163,-0.224,-0.277,-0.296,-0.3,-0.3,-0.298,-0.311,-0.329,-0.376,-0.432,-0.481,-0.529,-0.557,-0.583,-0.624,-0.667,-0.755,-0.846,-0.957,-1.068,-1.171,-1.274,-1.363,-1.451,-1.546,-1.641,-1.756,-1.848,-1.776,-1.715,-1.715,-1.717,-1.733,-1.76,-1.827,-1.893,-1.956,-2.015,-2.061,-2.099,-2.116,-2.139,-2.169,-2.189,-2.191,-2.194,-2.198,-2.208,-2.225,-2.237,-2.244,-2.241,-2.229,-2.211,-2.188,-2.165,-2.141,-2.117,-2.092,-2.087,-2.093,-2.106,-2.123,-2.147,-2.174,-2.198,-2.221,-2.253,-2.287,-2.267,-2.237,-2.24,-2.249,-2.269,-2.291,-2.3,-2.308,-2.341,-2.375,-2.396,-2.419,-2.463,-2.506,-2.539,-2.567,-2.544,-2.524,-2.528,-2.538,-2.58,-2.62,-2.655,-2.692,-2.738,-2.783,-2.82,-2.855,-2.886,-2.894,-2.849,-2.807,-2.768,-2.739,-2.726,-2.722,-2.73,-2.745,-2.769,-2.784,-2.788,-2.784,-2.771,-2.757,-2.744,-2.73,-2.716,-2.701,-2.686,-2.67,-2.655,-2.638,-2.622,-2.604,-2.587,-2.569,-2.55,-2.531,-2.512,-2.492,-2.472,-2.45,-2.429,-2.407,-2.384,-2.361,-2.338,-2.313,-2.289,-2.263,-2.237,-2.21,-2.183,-2.149,-2.115,-2.075,-2.035,-1.994,-1.954,-1.912,-1.871,-1.829,-1.787,-1.745,-1.702,-1.659,-1.616,-1.572,-1.529,-1.485,-1.441,-1.397,-1.352,-1.308,-1.263,-1.218,-1.173,-1.128,-1.082,-1.037,-0.991,-0.946,-0.9,-0.854,-0.808,-0.762,-0.716,-0.67,-0.624,-0.578,-0.532,-0.486,-0.44,-0.394,-0.348,-0.302,-0.256,-0.21,-0.164,-0.119,-0.073,-0.027,0.018,0.064,0.109,0.154,0.199,0.244,0.289,0.334,0.379,0.423,0.467,0.511,0.555,0.599,0.637,0.671,0.703,0.734,0.765,0.797,0.827,0.857,0.88,0.901,0.923,0.945,0.967,0.99,1.013,1.037,1.061,1.085,1.11,1.135,1.161,1.187,1.213,1.24,1.267,1.294,1.322,1.351,1.379,1.408,1.437,1.467,1.497,1.527,1.558,1.589,1.62,1.651,1.683,1.715,1.748,1.781,1.814,1.847,1.881,1.914,1.948,1.983,2.017,2.052,2.087,2.122,2.158,2.193,2.229,2.265,2.301,2.338,2.374,2.411,2.448,2.484,2.522,2.559,2.596,2.633,2.671,2.708,2.746,2.784,2.821,2.859,2.897,2.931,2.959,2.986,3.013,3.039,3.066,3.092,3.118,3.144,3.17,3.196,3.222,3.247,3.272,3.297,3.323,3.347,3.372,3.397,3.421,3.445,3.469,3.493,3.517,3.54,3.564,3.587,3.61,3.632,3.655,3.677,3.7,3.722,3.743,3.765,3.786,3.807,3.828,3.849,3.87,3.89,3.91,3.93,3.949,3.969,3.988,4.007,4.026,4.044,4.062,4.08,4.098,4.115,4.133,4.149,4.166,4.182,4.198,4.203,4.207,4.211,4.215,4.218,4.222,4.224,4.227,4.229,4.232,4.233,4.235,4.236,4.237,4.238,4.239,4.239,4.239,4.238,4.238,4.237,4.236,4.234,4.232,4.23,4.228,4.225,4.223,4.219,4.216,4.212,4.208,4.204,4.199,4.194,4.189,4.184,4.178,4.172,4.165,4.159,4.152,4.144,4.137,4.129,4.121,4.112,4.104,4.095,4.085,4.076,4.066,4.056,4.045,4.035,4.024,4.012,4.001,3.989,3.977,3.964,3.951,3.938,3.925,3.912,3.896,3.879,3.863,3.847,3.835,3.823,3.81,3.797,3.784,3.77,3.756,3.742,3.728,3.714,3.699,3.684,3.669,3.653,3.637,3.622,3.605,3.589,3.572,3.555,3.538,3.521,3.503,3.485,3.467,3.449,3.43,3.413,3.398,3.385,3.376,3.366,3.356,3.346,3.336,3.326,3.316,3.304,3.29,3.27,3.247,3.222,3.198,3.172,3.146,3.119,3.092,3.064,3.035,3.007,2.978,2.957,2.938,2.918,2.898,2.877,2.857,2.836,2.814,2.793,2.771,2.749,2.727,2.703,2.679,2.65,2.621,2.591,2.561,2.53,2.499,2.468,2.436,2.404,2.372,2.34,2.308,2.275,2.242,2.209,2.176,2.143,2.11,2.077,2.043,2.01,1.977,1.944,1.911,1.878,1.845,1.813,1.78,1.748,1.716,1.684,1.652,1.621,1.59,1.559,1.529,1.499,1.473,1.45,1.427,1.404,1.381,1.358,1.334,1.31,1.286,1.262,1.238,1.214,1.189,1.164,1.139,1.114,1.088,1.063,1.037,1.01,0.984,0.957,0.93,0.903,0.875,0.848,0.838,0.827,0.81,0.792,0.774,0.758,0.747,0.737,0.733,0.73,0.725,0.719,0.706,0.692,0.675,0.659,0.644,0.631,0.626,0.621,0.616,0.612,0.607,0.603,0.599,0.595,0.592,0.589,0.586,0.583,0.58,0.57,0.551,0.531,0.511,0.49,0.47,0.449,0.427,0.406,0.384,0.361,0.339,0.316,0.293,0.269,0.245,0.209,0.167,0.125,0.083,0.041,-0.001,-0.043,-0.084,-0.12,-0.152,-0.175,-0.193,-0.211,-0.229,-0.245,-0.262],"earthEl":[-0.786,-0.746,-0.706,-0.666,-0.625,-0.585,-0.543,-0.502,-0.46,-0.418,-0.376,-0.333,-0.29,-0.247,-0.203,-0.159,-0.115,-0.071,-0.026,0.019,0.064,0.109,0.155,0.201,0.247,0.293,0.34,0.387,0.434,0.482,0.529,0.577,0.625,0.674,0.722,0.771,0.82,0.87,0.919,0.969,1.019,1.069,1.119,1.17,1.22,1.271,1.322,1.374,1.425,1.477,1.529,1.581,1.633,1.685,1.738,1.791,1.844,1.897,1.95,2.003,2.057,2.111,2.164,2.218,2.272,2.327,2.381,2.436,2.49,2.545,2.6,2.655,2.71,2.765,2.821,2.876,2.932,2.987,3.043,3.099,3.155,3.211,3.267,3.323,3.38,3.436,3.492,3.549,3.605,3.662,3.719,3.775,3.832,3.889,3.946,4.003,4.059,4.116,4.173,4.23,4.287,4.344,4.401,4.458,4.515,4.572,4.629,4.686,4.743,4.8,4.857,4.914,4.971,5.028,5.084,5.141,5.198,5.254,5.311,5.368,5.424,5.48,5.537,5.593,5.649,5.705,5.761,5.817,5.872,5.928,5.983,6.039,6.094,6.149,6.204,6.259,6.313,6.368,6.422,6.476,6.53,6.584,6.638,6.691,6.744,6.797,6.85,6.903,6.955,7.007,7.059,7.111,7.162,7.214,7.265,7.315,7.366,7.416,7.466,7.515,7.565,7.614,7.662,7.711,7.759,7.807,7.854,7.901,7.948,7.994,8.04,8.086,8.132,8.176,8.221,8.265,8.309,8.352,8.395,8.438,8.48,8.522,8.563,8.604,8.644,8.684,8.724,8.763,8.801,8.839,8.877,8.914,8.951,8.987,9.022,9.057,9.092,9.126,9.159,9.192,9.224,9.256,9.287,9.318,9.348,9.378,9.406,9.435,9.462,9.489,9.516,9.542,9.567,9.592,9.616,9.639,9.661,9.683,9.705,9.726,9.746,9.765,9.784,9.801,9.819,9.835,9.851,9.866,9.881,9.895,9.908,9.92,9.932,9.943,9.953,9.962,9.971,9.979,9.986,9.992,9.998,10.003,10.007,10.01,10.013,10.015,10.016,10.017,10.016,10.015,10.013,10.01,10.007,10.002,9.997,9.991,9.985,9.977,9.969,9.96,9.951,9.94,9.929,9.917,9.904,9.89,9.876,9.861,9.845,9.828,9.81,9.792,9.773,9.753,9.733,9.711,9.689,9.666,9.643,9.619,9.593,9.568,9.541,9.514,9.486,9.457,9.427,9.397,9.366,9.335,9.302,9.269,9.236,9.201,9.166,9.13,9.094,9.057,9.019,8.981,8.942,8.902,8.862,8.821,8.779,8.737,8.694,8.65,8.606,8.562,8.517,8.471,8.424,8.378,8.33,8.282,8.233,8.184,8.135,8.085,8.034,7.983,7.931,7.879,7.826,7.773,7.72,7.666,7.611,7.557,7.501,7.446,7.389,7.333,7.276,7.219,7.161,7.103,7.045,6.986,6.927,6.867,6.808,6.747,6.687,6.626,6.565,6.504,6.443,6.381,6.319,6.257,6.194,6.131,6.068,6.005,5.942,5.878,5.814,5.75,5.686,5.622,5.557,5.493,5.428,5.363,5.298,5.233,5.168,5.102,5.037,4.971,4.906,4.84,4.774,4.709,4.643,4.577,4.511,4.445,4.379,4.313,4.247,4.181,4.116,4.05,3.984,3.918,3.852,3.787,3.721,3.655,3.59,3.524,3.459,3.394,3.329,3.264,3.199,3.134,3.069,3.005,2.94,2.876,2.812,2.748,2.684,2.62,2.557,2.494,2.431,2.368,2.305,2.242,2.18,2.118,2.056,1.994,1.933,1.872,1.811,1.75,1.69,1.63,1.57,1.51,1.451,1.391,1.333,1.274,1.216,1.158,1.1,1.043,0.986,0.929,0.872,0.816,0.761,0.705,0.65,0.595,0.541,0.487,0.433,0.379,0.326,0.274,0.221,0.169,0.118,0.067,0.016,-0.035,-0.085,-0.135,-0.184,-0.233,-0.281,-0.329,-0.377,-0.424,-0.471,-0.518,-0.564,-0.609,-0.655,-0.699,-0.744,-0.788,-0.831,-0.874,-0.917,-0.959,-1.001,-1.042,-1.083,-1.123,-1.163,-1.203,-1.242,-1.28,-1.318,-1.356,-1.393,-1.43,-1.466,-1.502,-1.537,-1.572,-1.606,-1.64,-1.673,-1.706,-1.739,-1.771,-1.802,-1.833,-1.863,-1.893,-1.923,-1.952,-1.98,-2.008,-2.036,-2.063,-2.089,-2.115,-2.141,-2.166,-2.19,-2.214,-2.237,-2.26,-2.283,-2.305,-2.326,-2.347,-2.367,-2.387,-2.407,-2.425,-2.444,-2.462,-2.479,-2.496,-2.512,-2.528,-2.543,-2.558,-2.572,-2.585,-2.599,-2.611,-2.623,-2.635,-2.646,-2.656,-2.667,-2.676,-2.685,-2.694,-2.701,-2.709,-2.716,-2.722,-2.728,-2.734,-2.738,-2.743,-2.747,-2.75,-2.753,-2.755,-2.757,-2.758,-2.759,-2.759,-2.759,-2.758,-2.757,-2.755,-2.753,-2.75,-2.746,-2.743,-2.738,-2.733,-2.728,-2.722,-2.716,-2.709,-2.702,-2.694,-2.686,-2.677,-2.668,-2.658,-2.648,-2.637,-2.626,-2.614,-2.602,-2.589,-2.576,-2.562,-2.548,-2.534,-2.519,-2.503,-2.487,-2.471,-2.454,-2.436,-2.418,-2.4,-2.381,-2.362,-2.343,-2.322,-2.302,-2.281,-2.259,-2.237,-2.215,-2.192,-2.169,-2.146,-2.121,-2.097,-2.072,-2.047,-2.021,-1.995,-1.968,-1.941,-1.914,-1.886,-1.858,-1.829,-1.8,-1.77,-1.741,-1.71,-1.68,-1.649,-1.617,-1.585,-1.553,-1.521,-1.488,-1.454,-1.421,-1.387,-1.352,-1.318,-1.282,-1.247,-1.211,-1.175,-1.138,-1.101,-1.064,-1.027,-0.989,-0.95,-0.912,-0.873,-0.834,-0.794,-0.754,-0.714,-0.674,-0.633,-0.592,-0.55,-0.509,-0.467,-0.424,-0.382,-0.339,-0.296,-0.252,-0.208,-0.164,-0.12,-0.076,-0.031,0.014,0.06,0.105,0.151,0.197,0.244,0.29,0.337,0.384,0.432,0.479,0.527,0.575,0.623,0.672,0.72,0.769,0.818,0.868,0.917,0.967,1.017,1.067,1.117,1.168,1.218,1.269,1.32,1.371,1.423,1.474,1.526,1.578,1.63,1.682,1.734,1.787,1.84,1.892,1.945,1.998,2.051,2.105,2.158,2.212,2.265,2.319,2.373,2.427,2.481,2.536,2.59,2.644],"earthAz":[327.2,327.1,327.1,327.0,326.9,326.9,326.8,326.8,326.7,326.6,326.6,326.5,326.5,326.4,326.3,326.3,326.2,326.2,326.1,326.0,326.0,325.9,325.9,325.8,325.7,325.7,325.6,325.6,325.5,325.4,325.4,325.3,325.3,325.2,325.1,325.1,325.0,325.0,324.9,324.9,324.8,324.7,324.7,324.6,324.6,324.5,324.4,324.4,324.3,324.3,324.2,324.2,324.1,324.0,324.0,323.9,323.9,323.8,323.8,323.7,323.7,323.6,323.6,323.5,323.4,323.4,323.3,323.3,323.2,323.2,323.1,323.1,323.0,323.0,322.9,322.9,322.8,322.8,322.7,322.7,322.6,322.6,322.5,322.5,322.5,322.4,322.4,322.3,322.3,322.2,322.2,322.1,322.1,322.1,322.0,322.0,321.9,321.9,321.9,321.8,321.8,321.8,321.7,321.7,321.6,321.6,321.6,321.5,321.5,321.5,321.4,321.4,321.4,321.4,321.3,321.3,321.3,321.2,321.2,321.2,321.2,321.1,321.1,321.1,321.1,321.1,321.0,321.0,321.0,321.0,321.0,320.9,320.9,320.9,320.9,320.9,320.9,320.9,320.8,320.8,320.8,320.8,320.8,320.8,320.8,320.8,320.8,320.8,320.8,320.8,320.8,320.8,320.8,320.8,320.8,320.8,320.8,320.8,320.8,320.8,320.8,320.8,320.8,320.8,320.9,320.9,320.9,320.9,320.9,320.9,320.9,321.0,321.0,321.0,321.0,321.0,321.1,321.1,321.1,321.1,321.2,321.2,321.2,321.2,321.3,321.3,321.3,321.4,321.4,321.4,321.5,321.5,321.6,321.6,321.6,321.7,321.7,321.8,321.8,321.8,321.9,321.9,322.0,322.0,322.1,322.1,322.2,322.2,322.3,322.3,322.4,322.4,322.5,322.5,322.6,322.6,322.7,322.8,322.8,322.9,322.9,323.0,323.1,323.1,323.2,323.3,323.3,323.4,323.5,323.5,323.6,323.7,323.7,323.8,323.9,323.9,324.0,324.1,324.2,324.2,324.3,324.4,324.4,324.5,324.6,324.7,324.7,324.8,324.9,325.0,325.1,325.1,325.2,325.3,325.4,325.5,325.5,325.6,325.7,325.8,325.9,325.9,326.0,326.1,326.2,326.3,326.4,326.4,326.5,326.6,326.7,326.8,326.9,326.9,327.0,327.1,327.2,327.3,327.4,327.5,327.5,327.6,327.7,327.8,327.9,328.0,328.0,328.1,328.2,328.3,328.4,328.5,328.5,328.6,328.7,328.8,328.9,329.0,329.0,329.1,329.2,329.3,329.4,329.5,329.5,329.6,329.7,329.8,329.9,329.9,330.0,330.1,330.2,330.2,330.3,330.4,330.5,330.5,330.6,330.7,330.8,330.8,330.9,331.0,331.1,331.1,331.2,331.3,331.4,331.4,331.5,331.6,331.6,331.7,331.8,331.8,331.9,332.0,332.0,332.1,332.2,332.2,332.3,332.3,332.4,332.5,332.5,332.6,332.6,332.7,332.8,332.8,332.9,332.9,333.0,333.0,333.1,333.1,333.2,333.2,333.3,333.3,333.4,333.4,333.5,333.5,333.6,333.6,333.7,333.7,333.8,333.8,333.9,333.9,333.9,334.0,334.0,334.1,334.1,334.1,334.2,334.2,334.2,334.3,334.3,334.3,334.4,334.4,334.4,334.5,334.5,334.5,334.6,334.6,334.6,334.6,334.7,334.7,334.7,334.8,334.8,334.8,334.8,334.8,334.9,334.9,334.9,334.9,334.9,335.0,335.0,335.0,335.0,335.0,335.0,335.1,335.1,335.1,335.1,335.1,335.1,335.1,335.1,335.2,335.2,335.2,335.2,335.2,335.2,335.2,335.2,335.2,335.2,335.2,335.2,335.2,335.2,335.2,335.2,335.2,335.2,335.2,335.2,335.2,335.2,335.2,335.2,335.2,335.2,335.2,335.2,335.2,335.2,335.2,335.2,335.2,335.2,335.2,335.2,335.2,335.2,335.2,335.1,335.1,335.1,335.1,335.1,335.1,335.1,335.1,335.1,335.0,335.0,335.0,335.0,335.0,335.0,335.0,334.9,334.9,334.9,334.9,334.9,334.8,334.8,334.8,334.8,334.8,334.8,334.7,334.7,334.7,334.7,334.7,334.6,334.6,334.6,334.6,334.5,334.5,334.5,334.5,334.4,334.4,334.4,334.4,334.3,334.3,334.3,334.3,334.2,334.2,334.2,334.2,334.1,334.1,334.1,334.0,334.0,334.0,334.0,333.9,333.9,333.9,333.8,333.8,333.8,333.7,333.7,333.7,333.6,333.6,333.6,333.5,333.5,333.5,333.4,333.4,333.4,333.3,333.3,333.3,333.2,333.2,333.2,333.1,333.1,333.0,333.0,333.0,332.9,332.9,332.9,332.8,332.8,332.7,332.7,332.7,332.6,332.6,332.5,332.5,332.5,332.4,332.4,332.3,332.3,332.3,332.2,332.2,332.1,332.1,332.0,332.0,332.0,331.9,331.9,331.8,331.8,331.7,331.7,331.6,331.6,331.5,331.5,331.5,331.4,331.4,331.3,331.3,331.2,331.2,331.1,331.1,331.0,331.0,330.9,330.9,330.8,330.8,330.7,330.7,330.6,330.6,330.5,330.5,330.4,330.4,330.3,330.3,330.2,330.2,330.1,330.1,330.0,330.0,329.9,329.9,329.8,329.8,329.7,329.6,329.6,329.5,329.5,329.4,329.4,329.3,329.3,329.2,329.2,329.1,329.0,329.0,328.9,328.9,328.8,328.8,328.7,328.6,328.6,328.5,328.5,328.4,328.4,328.3,328.2,328.2,328.1,328.1,328.0,327.9,327.9,327.8,327.8,327.7,327.7,327.6,327.5,327.5,327.4,327.4,327.3,327.2,327.2,327.1,327.1,327.0,326.9,326.9,326.8,326.8,326.7,326.6,326.6,326.5,326.5,326.4,326.3,326.3,326.2,326.1,326.1,326.0,326.0,325.9,325.8,325.8,325.7,325.7,325.6,325.5,325.5,325.4,325.4,325.3,325.2,325.2,325.1,325.1,325.0,324.9,324.9,324.8,324.8,324.7,324.6,324.6,324.5,324.5,324.4,324.3,324.3,324.2,324.2,324.1,324.0,324.0,323.9,323.9,323.8],"earthHz":[-2.514,-2.512,-2.51,-2.507,-2.505,-2.503,-2.5,-2.498,-2.495,-2.493,-2.491,-2.488,-2.486,-2.483,-2.481,-2.478,-2.476,-2.474,-2.471,-2.469,-2.466,-2.464,-2.461,-2.459,-2.456,-2.454,-2.451,-2.449,-2.446,-2.444,-2.441,-2.439,-2.436,-2.434,-2.431,-2.429,-2.426,-2.424,-2.421,-2.418,-2.416,-2.413,-2.411,-2.408,-2.406,-2.403,-2.4,-2.398,-2.395,-2.393,-2.39,-2.388,-2.385,-2.383,-2.38,-2.378,-2.375,-2.373,-2.37,-2.368,-2.365,-2.363,-2.36,-2.358,-2.355,-2.353,-2.35,-2.348,-2.345,-2.343,-2.341,-2.338,-2.336,-2.333,-2.331,-2.329,-2.326,-2.324,-2.322,-2.319,-2.317,-2.315,-2.312,-2.31,-2.308,-2.306,-2.303,-2.301,-2.299,-2.297,-2.295,-2.293,-2.291,-2.289,-2.287,-2.285,-2.283,-2.281,-2.279,-2.277,-2.275,-2.273,-2.271,-2.269,-2.268,-2.266,-2.264,-2.262,-2.261,-2.259,-2.257,-2.256,-2.254,-2.253,-2.251,-2.25,-2.249,-2.247,-2.246,-2.245,-2.243,-2.242,-2.241,-2.24,-2.239,-2.237,-2.236,-2.235,-2.234,-2.233,-2.233,-2.232,-2.231,-2.23,-2.229,-2.229,-2.228,-2.227,-2.227,-2.226,-2.226,-2.225,-2.225,-2.224,-2.224,-2.224,-2.223,-2.223,-2.223,-2.223,-2.223,-2.223,-2.223,-2.223,-2.223,-2.223,-2.224,-2.224,-2.224,-2.225,-2.225,-2.225,-2.226,-2.227,-2.227,-2.228,-2.229,-2.229,-2.23,-2.231,-2.232,-2.233,-2.234,-2.235,-2.236,-2.237,-2.238,-2.239,-2.241,-2.242,-2.243,-2.245,-2.246,-2.248,-2.249,-2.251,-2.252,-2.254,-2.256,-2.257,-2.259,-2.261,-2.263,-2.265,-2.267,-2.269,-2.271,-2.273,-2.275,-2.277,-2.28,-2.282,-2.284,-2.287,-2.289,-2.291,-2.294,-2.296,-2.299,-2.301,-2.304,-2.306,-2.309,-2.312,-2.314,-2.317,-2.32,-2.323,-2.326,-2.329,-2.332,-2.335,-2.337,-2.34,-2.343,-2.346,-2.349,-2.352,-2.355,-2.359,-2.362,-2.365,-2.368,-2.371,-2.374,-2.378,-2.381,-2.384,-2.387,-2.391,-2.394,-2.397,-2.4,-2.404,-2.407,-2.41,-2.414,-2.417,-2.421,-2.424,-2.427,-2.431,-2.434,-2.437,-2.441,-2.444,-2.448,-2.451,-2.454,-2.458,-2.461,-2.465,-2.468,-2.471,-2.475,-2.478,-2.481,-2.485,-2.488,-2.491,-2.495,-2.498,-2.502,-2.505,-2.508,-2.512,-2.515,-2.518,-2.521,-2.524,-2.528,-2.531,-2.534,-2.537,-2.541,-2.544,-2.547,-2.55,-2.553,-2.556,-2.559,-2.562,-2.565,-2.568,-2.571,-2.574,-2.577,-2.58,-2.583,-2.586,-2.589,-2.592,-2.594,-2.597,-2.6,-2.603,-2.606,-2.608,-2.611,-2.614,-2.616,-2.619,-2.622,-2.624,-2.627,-2.629,-2.632,-2.634,-2.637,-2.639,-2.641,-2.644,-2.646,-2.649,-2.651,-2.653,-2.655,-2.658,-2.66,-2.662,-2.664,-2.666,-2.669,-2.671,-2.673,-2.675,-2.677,-2.679,-2.681,-2.683,-2.685,-2.687,-2.688,-2.69,-2.692,-2.694,-2.696,-2.697,-2.699,-2.701,-2.702,-2.704,-2.706,-2.707,-2.709,-2.711,-2.712,-2.714,-2.715,-2.717,-2.718,-2.719,-2.721,-2.722,-2.724,-2.725,-2.726,-2.727,-2.729,-2.73,-2.731,-2.732,-2.734,-2.735,-2.736,-2.737,-2.738,-2.739,-2.74,-2.741,-2.742,-2.743,-2.744,-2.745,-2.746,-2.747,-2.748,-2.749,-2.75,-2.75,-2.751,-2.752,-2.753,-2.754,-2.754,-2.755,-2.756,-2.757,-2.757,-2.758,-2.759,-2.759,-2.76,-2.76,-2.761,-2.761,-2.762,-2.763,-2.763,-2.764,-2.764,-2.764,-2.765,-2.765,-2.766,-2.766,-2.766,-2.767,-2.767,-2.767,-2.768,-2.768,-2.768,-2.769,-2.769,-2.769,-2.769,-2.769,-2.77,-2.77,-2.77,-2.77,-2.77,-2.77,-2.77,-2.77,-2.771,-2.771,-2.771,-2.771,-2.771,-2.771,-2.771,-2.771,-2.771,-2.771,-2.771,-2.771,-2.77,-2.77,-2.77,-2.77,-2.77,-2.77,-2.77,-2.77,-2.769,-2.769,-2.769,-2.769,-2.769,-2.768,-2.768,-2.768,-2.768,-2.767,-2.767,-2.767,-2.766,-2.766,-2.766,-2.765,-2.765,-2.765,-2.764,-2.764,-2.764,-2.763,-2.763,-2.762,-2.762,-2.761,-2.761,-2.76,-2.76,-2.76,-2.759,-2.759,-2.758,-2.757,-2.757,-2.756,-2.756,-2.755,-2.755,-2.754,-2.753,-2.753,-2.752,-2.752,-2.751,-2.75,-2.75,-2.749,-2.748,-2.748,-2.747,-2.746,-2.746,-2.745,-2.744,-2.743,-2.743,-2.742,-2.741,-2.741,-2.74,-2.739,-2.738,-2.737,-2.737,-2.736,-2.735,-2.734,-2.733,-2.732,-2.731,-2.73,-2.73,-2.729,-2.728,-2.727,-2.726,-2.725,-2.724,-2.723,-2.722,-2.721,-2.72,-2.719,-2.718,-2.717,-2.716,-2.715,-2.714,-2.713,-2.712,-2.711,-2.71,-2.709,-2.708,-2.707,-2.705,-2.704,-2.703,-2.702,-2.701,-2.7,-2.699,-2.697,-2.696,-2.695,-2.694,-2.693,-2.691,-2.69,-2.689,-2.688,-2.686,-2.685,-2.684,-2.683,-2.681,-2.68,-2.679,-2.677,-2.676,-2.674,-2.673,-2.672,-2.67,-2.669,-2.667,-2.666,-2.665,-2.663,-2.662,-2.66,-2.659,-2.657,-2.656,-2.654,-2.653,-2.651,-2.65,-2.648,-2.647,-2.645,-2.643,-2.642,-2.64,-2.639,-2.637,-2.635,-2.634,-2.632,-2.63,-2.629,-2.627,-2.625,-2.624,-2.622,-2.62,-2.618,-2.617,-2.615,-2.613,-2.611,-2.609,-2.608,-2.606,-2.604,-2.602,-2.6,-2.598,-2.596,-2.594,-2.593,-2.591,-2.589,-2.587,-2.585,-2.583,-2.581,-2.579,-2.577,-2.575,-2.573,-2.571,-2.569,-2.567,-2.565,-2.562,-2.56,-2.558,-2.556,-2.554,-2.552,-2.55,-2.548,-2.546,-2.543,-2.541,-2.539,-2.537,-2.534,-2.532,-2.53,-2.528,-2.525,-2.523,-2.521,-2.519,-2.516,-2.514,-2.512,-2.509,-2.507,-2.505,-2.502,-2.5,-2.497,-2.495,-2.493,-2.49,-2.488,-2.485,-2.483,-2.48,-2.478,-2.476,-2.473,-2.471,-2.468,-2.466,-2.463,-2.461,-2.458,-2.455,-2.453,-2.45,-2.448,-2.445,-2.443,-2.44,-2.438,-2.435,-2.433,-2.43,-2.427,-2.425,-2.422,-2.42,-2.417,-2.414,-2.412,-2.409,-2.406,-2.404,-2.401,-2.398,-2.396,-2.393,-2.391,-2.388,-2.385,-2.383,-2.38,-2.378,-2.375,-2.372],"f":{"sun":"1111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000111111111111111111111111","earth":"1111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111000000000000000000000000000000011111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111","both":"1111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000111111111111111111111111"}},"MMP-02":{"name":"Mons Mouton Plateau sample","lat":-84.3,"lon":30.6,"h20":5290.961,"slope":8.4931,"slopeMax":10.2909,"span":13.5161,"sunEl":[0.952,1.003,1.053,1.103,1.153,1.204,1.254,1.304,1.355,1.405,1.456,1.506,1.556,1.607,1.657,1.708,1.758,1.808,1.859,1.909,1.959,2.01,2.06,2.11,2.16,2.21,2.26,2.31,2.36,2.41,2.46,2.51,2.559,2.609,2.658,2.708,2.757,2.806,2.855,2.904,2.953,3.002,3.051,3.099,3.148,3.196,3.244,3.292,3.34,3.388,3.435,3.483,3.53,3.577,3.624,3.671,3.718,3.764,3.811,3.857,3.903,3.949,3.994,4.04,4.085,4.13,4.175,4.219,4.264,4.308,4.352,4.395,4.439,4.482,4.525,4.568,4.611,4.653,4.695,4.737,4.779,4.82,4.861,4.902,4.943,4.983,5.023,5.063,5.102,5.142,5.18,5.219,5.257,5.296,5.333,5.371,5.408,5.445,5.482,5.518,5.554,5.589,5.625,5.66,5.694,5.729,5.763,5.797,5.83,5.863,5.896,5.928,5.96,5.992,6.023,6.054,6.085,6.115,6.145,6.174,6.203,6.232,6.261,6.289,6.317,6.344,6.371,6.397,6.424,6.449,6.475,6.5,6.524,6.549,6.573,6.596,6.619,6.642,6.664,6.686,6.707,6.728,6.749,6.769,6.789,6.809,6.828,6.846,6.864,6.882,6.899,6.916,6.933,6.949,6.965,6.98,6.995,7.009,7.023,7.036,7.049,7.062,7.074,7.086,7.097,7.108,7.119,7.129,7.138,7.147,7.156,7.164,7.172,7.18,7.187,7.193,7.199,7.205,7.21,7.214,7.219,7.223,7.226,7.229,7.231,7.233,7.235,7.236,7.237,7.237,7.237,7.236,7.235,7.233,7.231,7.229,7.226,7.223,7.219,7.214,7.21,7.205,7.199,7.193,7.187,7.18,7.172,7.164,7.156,7.147,7.138,7.129,7.119,7.108,7.097,7.086,7.074,7.062,7.049,7.036,7.023,7.009,6.995,6.98,6.965,6.949,6.933,6.916,6.899,6.882,6.864,6.846,6.827,6.808,6.789,6.769,6.749,6.728,6.707,6.686,6.664,6.642,6.619,6.596,6.572,6.548,6.524,6.499,6.474,6.449,6.423,6.397,6.37,6.343,6.316,6.288,6.26,6.232,6.203,6.174,6.144,6.114,6.084,6.053,6.022,5.991,5.959,5.927,5.895,5.862,5.829,5.796,5.762,5.728,5.693,5.659,5.624,5.588,5.553,5.517,5.48,5.444,5.407,5.369,5.332,5.294,5.256,5.217,5.179,5.14,5.1,5.061,5.021,4.981,4.941,4.9,4.859,4.818,4.776,4.735,4.693,4.651,4.608,4.566,4.523,4.48,4.436,4.393,4.349,4.305,4.261,4.216,4.171,4.126,4.081,4.036,3.991,3.945,3.899,3.853,3.807,3.76,3.714,3.667,3.62,3.573,3.526,3.478,3.431,3.383,3.335,3.287,3.239,3.191,3.142,3.094,3.045,2.996,2.948,2.899,2.849,2.8,2.751,2.701,2.652,2.602,2.553,2.503,2.453,2.403,2.353,2.303,2.253,2.203,2.153,2.102,2.052,2.002,1.951,1.901,1.85,1.8,1.749,1.699,1.648,1.598,1.547,1.496,1.446,1.395,1.345,1.294,1.244,1.193,1.143,1.092,1.042,0.991,0.941,0.891,0.84,0.79,0.74,0.69,0.64,0.59,0.54,0.49,0.44,0.391,0.341,0.291,0.242,0.193,0.144,0.094,0.045,-0.004,-0.052,-0.101,-0.149,-0.198,-0.246,-0.294,-0.342,-0.39,-0.438,-0.485,-0.533,-0.58,-0.627,-0.674,-0.721,-0.768,-0.814,-0.86,-0.906,-0.952,-0.998,-1.043,-1.089,-1.134,-1.179,-1.223,-1.268,-1.312,-1.356,-1.4,-1.444,-1.487,-1.53,-1.573,-1.616,-1.658,-1.7,-1.742,-1.784,-1.825,-1.867,-1.908,-1.948,-1.989,-2.029,-2.069,-2.108,-2.148,-2.187,-2.225,-2.264,-2.302,-2.34,-2.377,-2.415,-2.452,-2.488,-2.525,-2.561,-2.596,-2.632,-2.667,-2.702,-2.736,-2.77,-2.804,-2.837,-2.87,-2.903,-2.936,-2.968,-2.999,-3.031,-3.062,-3.093,-3.123,-3.153,-3.183,-3.212,-3.241,-3.269,-3.297,-3.325,-3.352,-3.38,-3.406,-3.432,-3.458,-3.484,-3.509,-3.534,-3.558,-3.582,-3.605,-3.629,-3.651,-3.674,-3.696,-3.717,-3.738,-3.759,-3.779,-3.799,-3.819,-3.838,-3.857,-3.875,-3.893,-3.91,-3.927,-3.944,-3.96,-3.976,-3.991,-4.006,-4.02,-4.034,-4.048,-4.061,-4.074,-4.086,-4.098,-4.109,-4.12,-4.131,-4.141,-4.151,-4.16,-4.169,-4.177,-4.185,-4.192,-4.199,-4.206,-4.212,-4.218,-4.223,-4.228,-4.232,-4.236,-4.24,-4.243,-4.245,-4.247,-4.249,-4.25,-4.251,-4.252,-4.251,-4.251,-4.25,-4.248,-4.247,-4.244,-4.241,-4.238,-4.235,-4.23,-4.226,-4.221,-4.215,-4.21,-4.203,-4.196,-4.189,-4.182,-4.174,-4.165,-4.156,-4.147,-4.137,-4.126,-4.116,-4.105,-4.093,-4.081,-4.068,-4.056,-4.042,-4.029,-4.014,-4.0,-3.985,-3.969,-3.953,-3.937,-3.92,-3.903,-3.886,-3.868,-3.849,-3.831,-3.811,-3.792,-3.772,-3.751,-3.73,-3.709,-3.687,-3.665,-3.643,-3.62,-3.597,-3.573,-3.549,-3.525,-3.5,-3.475,-3.449,-3.423,-3.397,-3.37,-3.343,-3.316,-3.288,-3.26,-3.231,-3.202,-3.173,-3.143,-3.113,-3.083,-3.052,-3.021,-2.99,-2.958,-2.926,-2.894,-2.861,-2.828,-2.795,-2.761,-2.727,-2.692,-2.658,-2.623,-2.587,-2.552,-2.516,-2.479,-2.443,-2.406,-2.369,-2.331,-2.294,-2.256,-2.217,-2.179,-2.14,-2.101,-2.061,-2.022,-1.982,-1.941,-1.901,-1.86,-1.819,-1.778,-1.737,-1.695,-1.653,-1.611,-1.568,-1.525,-1.483,-1.439,-1.396,-1.353,-1.309,-1.265,-1.221,-1.176,-1.132,-1.087,-1.042,-0.997,-0.951,-0.906,-0.86,-0.814,-0.768,-0.722,-0.676,-0.629,-0.582,-0.536,-0.489,-0.441,-0.394,-0.347,-0.299,-0.251,-0.204,-0.156,-0.108,-0.059,-0.011,0.037,0.086,0.134,0.183,0.232,0.281,0.33,0.379,0.428,0.477,0.526,0.575,0.625,0.674,0.724,0.773,0.823,0.872,0.922,0.972,1.021,1.071,1.121,1.171,1.221,1.27],"sunAz":[96.1,95.6,95.1,94.6,94.1,93.6,93.1,92.6,92.1,91.6,91.1,90.6,90.1,89.6,89.1,88.6,88.1,87.6,87.0,86.5,86.0,85.5,85.0,84.5,84.0,83.5,83.0,82.5,82.0,81.5,81.0,80.5,80.0,79.5,79.0,78.5,78.0,77.4,76.9,76.4,75.9,75.4,74.9,74.4,73.9,73.4,72.9,72.4,71.9,71.4,70.9,70.4,69.9,69.4,68.8,68.3,67.8,67.3,66.8,66.3,65.8,65.3,64.8,64.3,63.8,63.3,62.8,62.3,61.8,61.3,60.7,60.2,59.7,59.2,58.7,58.2,57.7,57.2,56.7,56.2,55.7,55.2,54.7,54.2,53.7,53.1,52.6,52.1,51.6,51.1,50.6,50.1,49.6,49.1,48.6,48.1,47.6,47.1,46.6,46.0,45.5,45.0,44.5,44.0,43.5,43.0,42.5,42.0,41.5,41.0,40.5,39.9,39.4,38.9,38.4,37.9,37.4,36.9,36.4,35.9,35.4,34.9,34.4,33.8,33.3,32.8,32.3,31.8,31.3,30.8,30.3,29.8,29.3,28.8,28.3,27.7,27.2,26.7,26.2,25.7,25.2,24.7,24.2,23.7,23.2,22.7,22.1,21.6,21.1,20.6,20.1,19.6,19.1,18.6,18.1,17.6,17.0,16.5,16.0,15.5,15.0,14.5,14.0,13.5,13.0,12.5,12.0,11.4,10.9,10.4,9.9,9.4,8.9,8.4,7.9,7.4,6.9,6.3,5.8,5.3,4.8,4.3,3.8,3.3,2.8,2.3,1.8,1.2,0.7,0.2,359.7,359.2,358.7,358.2,357.7,357.2,356.7,356.2,355.6,355.1,354.6,354.1,353.6,353.1,352.6,352.1,351.6,351.1,350.5,350.0,349.5,349.0,348.5,348.0,347.5,347.0,346.5,346.0,345.5,344.9,344.4,343.9,343.4,342.9,342.4,341.9,341.4,340.9,340.4,339.9,339.3,338.8,338.3,337.8,337.3,336.8,336.3,335.8,335.3,334.8,334.3,333.8,333.2,332.7,332.2,331.7,331.2,330.7,330.2,329.7,329.2,328.7,328.2,327.7,327.2,326.6,326.1,325.6,325.1,324.6,324.1,323.6,323.1,322.6,322.1,321.6,321.1,320.6,320.1,319.5,319.0,318.5,318.0,317.5,317.0,316.5,316.0,315.5,315.0,314.5,314.0,313.5,313.0,312.5,311.9,311.4,310.9,310.4,309.9,309.4,308.9,308.4,307.9,307.4,306.9,306.4,305.9,305.4,304.9,304.4,303.9,303.4,302.8,302.3,301.8,301.3,300.8,300.3,299.8,299.3,298.8,298.3,297.8,297.3,296.8,296.3,295.8,295.3,294.8,294.3,293.8,293.3,292.8,292.2,291.7,291.2,290.7,290.2,289.7,289.2,288.7,288.2,287.7,287.2,286.7,286.2,285.7,285.2,284.7,284.2,283.7,283.2,282.7,282.2,281.7,281.2,280.7,280.1,279.6,279.1,278.6,278.1,277.6,277.1,276.6,276.1,275.6,275.1,274.6,274.1,273.6,273.1,272.6,272.1,271.6,271.1,270.6,270.1,269.6,269.1,268.6,268.1,267.6,267.1,266.6,266.0,265.5,265.0,264.5,264.0,263.5,263.0,262.5,262.0,261.5,261.0,260.5,260.0,259.5,259.0,258.5,258.0,257.5,257.0,256.5,256.0,255.5,255.0,254.5,254.0,253.5,252.9,252.4,251.9,251.4,250.9,250.4,249.9,249.4,248.9,248.4,247.9,247.4,246.9,246.4,245.9,245.4,244.9,244.4,243.9,243.4,242.9,242.4,241.9,241.3,240.8,240.3,239.8,239.3,238.8,238.3,237.8,237.3,236.8,236.3,235.8,235.3,234.8,234.3,233.8,233.3,232.8,232.3,231.7,231.2,230.7,230.2,229.7,229.2,228.7,228.2,227.7,227.2,226.7,226.2,225.7,225.2,224.7,224.2,223.7,223.1,222.6,222.1,221.6,221.1,220.6,220.1,219.6,219.1,218.6,218.1,217.6,217.1,216.6,216.1,215.5,215.0,214.5,214.0,213.5,213.0,212.5,212.0,211.5,211.0,210.5,210.0,209.5,208.9,208.4,207.9,207.4,206.9,206.4,205.9,205.4,204.9,204.4,203.9,203.4,202.9,202.3,201.8,201.3,200.8,200.3,199.8,199.3,198.8,198.3,197.8,197.3,196.8,196.2,195.7,195.2,194.7,194.2,193.7,193.2,192.7,192.2,191.7,191.2,190.6,190.1,189.6,189.1,188.6,188.1,187.6,187.1,186.6,186.1,185.6,185.0,184.5,184.0,183.5,183.0,182.5,182.0,181.5,181.0,180.5,180.0,179.4,178.9,178.4,177.9,177.4,176.9,176.4,175.9,175.4,174.9,174.4,173.8,173.3,172.8,172.3,171.8,171.3,170.8,170.3,169.8,169.3,168.8,168.2,167.7,167.2,166.7,166.2,165.7,165.2,164.7,164.2,163.7,163.2,162.7,162.1,161.6,161.1,160.6,160.1,159.6,159.1,158.6,158.1,157.6,157.1,156.5,156.0,155.5,155.0,154.5,154.0,153.5,153.0,152.5,152.0,151.5,151.0,150.4,149.9,149.4,148.9,148.4,147.9,147.4,146.9,146.4,145.9,145.4,144.9,144.4,143.8,143.3,142.8,142.3,141.8,141.3,140.8,140.3,139.8,139.3,138.8,138.3,137.8,137.2,136.7,136.2,135.7,135.2,134.7,134.2,133.7,133.2,132.7,132.2,131.7,131.2,130.7,130.1,129.6,129.1,128.6,128.1,127.6,127.1,126.6,126.1,125.6,125.1,124.6,124.1,123.6,123.1,122.6,122.0,121.5,121.0,120.5,120.0,119.5,119.0,118.5,118.0,117.5,117.0,116.5,116.0,115.5,115.0,114.5,114.0,113.4,112.9,112.4,111.9,111.4,110.9,110.4,109.9,109.4,108.9,108.4,107.9,107.4,106.9,106.4,105.9,105.4,104.9,104.4,103.8,103.3,102.8,102.3,101.8,101.3,100.8,100.3,99.8,99.3,98.8,98.3,97.8,97.3,96.8,96.3,95.8,95.3,94.8,94.2,93.7,93.2,92.7,92.2,91.7,91.2],"sunHz":[7.327,7.392,7.456,7.52,7.584,7.647,7.71,7.773,7.835,7.896,7.957,8.018,8.078,8.137,8.197,8.255,8.313,8.37,8.427,8.481,8.536,8.589,8.641,8.689,8.737,8.783,8.829,8.873,8.917,8.96,9.002,9.043,9.083,9.122,9.161,9.198,9.235,9.27,9.306,9.339,9.373,9.405,9.437,9.467,9.497,9.526,9.555,9.583,9.613,9.646,9.679,9.71,9.741,9.771,9.8,9.827,9.851,9.871,9.89,9.908,9.925,9.941,9.957,9.972,9.986,9.999,10.011,10.023,10.034,10.044,10.053,10.061,10.069,10.076,10.082,10.088,10.093,10.097,10.1,10.102,10.104,10.106,10.106,10.106,10.105,10.103,10.101,10.098,10.094,10.09,10.085,10.079,10.073,10.066,10.058,10.05,10.041,10.032,10.022,10.012,10.0,9.989,9.976,9.963,9.949,9.936,9.921,9.906,9.89,9.873,9.856,9.839,9.819,9.799,9.772,9.745,9.717,9.689,9.66,9.631,9.601,9.571,9.541,9.51,9.479,9.447,9.415,9.382,9.349,9.316,9.283,9.249,9.214,9.179,9.144,9.109,9.073,9.037,9.0,8.964,8.926,8.886,8.844,8.801,8.757,8.713,8.668,8.623,8.578,8.532,8.486,8.439,8.392,8.344,8.296,8.248,8.199,8.15,8.1,8.05,7.999,7.948,7.897,7.845,7.794,7.741,7.688,7.635,7.582,7.528,7.473,7.419,7.364,7.308,7.253,7.197,7.14,7.084,7.027,6.969,6.912,6.853,6.795,6.736,6.678,6.618,6.557,6.493,6.428,6.362,6.295,6.228,6.161,6.094,6.025,5.957,5.888,5.819,5.75,5.68,5.61,5.539,5.468,5.397,5.326,5.254,5.182,5.109,5.036,4.964,4.89,4.817,4.741,4.666,4.588,4.51,4.432,4.354,4.276,4.197,4.119,4.041,3.963,3.884,3.806,3.727,3.649,3.57,3.491,3.413,3.334,3.255,3.176,3.097,3.018,2.939,2.86,2.781,2.702,2.623,2.544,2.464,2.385,2.306,2.226,2.147,2.067,1.988,1.908,1.828,1.749,1.669,1.589,1.509,1.429,1.349,1.269,1.189,1.109,1.028,0.948,0.868,0.787,0.707,0.626,0.581,0.542,0.51,0.478,0.44,0.401,0.365,0.328,0.291,0.255,0.22,0.186,0.164,0.143,0.132,0.121,0.114,0.108,0.102,0.096,0.09,0.085,0.081,0.074,0.052,0.03,0.01,-0.005,-0.0,0.006,0.016,0.028,0.043,0.058,0.07,0.083,0.096,0.109,0.125,0.145,0.174,0.209,0.255,0.302,0.351,0.396,0.434,0.484,0.551,0.62,0.69,0.759,0.826,0.889,0.948,1.008,1.069,1.126,1.179,1.23,1.279,1.324,1.364,1.409,1.457,1.513,1.574,1.636,1.698,1.743,1.776,1.805,1.833,1.861,1.889,1.918,1.947,1.971,1.992,2.01,2.025,2.028,2.026,2.02,2.012,2.003,1.994,1.973,1.947,1.915,1.88,1.844,1.806,1.766,1.725,1.692,1.661,1.627,1.591,1.556,1.521,1.495,1.47,1.445,1.419,1.391,1.363,1.322,1.279,1.236,1.194,1.155,1.117,1.089,1.062,1.036,1.009,0.983,0.958,0.928,0.899,0.868,0.836,0.803,0.771,0.732,0.692,0.659,0.626,0.608,0.59,0.573,0.556,0.54,0.524,0.508,0.493,0.484,0.474,0.466,0.458,0.451,0.444,0.438,0.432,0.426,0.424,0.435,0.454,0.504,0.552,0.598,0.644,0.689,0.73,0.755,0.782,0.812,0.837,0.848,0.862,0.88,0.886,0.868,0.853,0.842,0.825,0.797,0.768,0.739,0.718,0.707,0.697,0.687,0.685,0.692,0.701,0.713,0.734,0.765,0.8,0.84,0.88,0.918,0.952,0.983,1.016,1.051,1.091,1.136,1.182,1.23,1.273,1.313,1.354,1.396,1.437,1.478,1.523,1.568,1.625,1.686,1.753,1.82,1.885,1.949,2.004,2.058,2.112,2.166,2.231,2.296,2.366,2.435,2.508,2.581,2.645,2.709,2.772,2.835,2.904,2.973,3.042,3.11,3.168,3.225,3.281,3.337,3.393,3.448,3.5,3.552,3.599,3.646,3.69,3.734,3.775,3.813,3.843,3.874,3.907,3.935,3.955,3.977,4.001,4.023,4.041,4.059,4.075,4.089,4.099,4.108,4.116,4.122,4.126,4.124,4.117,4.101,4.08,4.063,4.049,4.049,4.054,4.069,4.087,4.097,4.105,4.112,4.119,4.13,4.141,4.132,4.121,4.113,4.104,4.104,4.104,4.113,4.123,4.138,4.154,4.174,4.194,4.21,4.226,4.236,4.247,4.26,4.273,4.284,4.295,4.305,4.317,4.331,4.346,4.363,4.38,4.399,4.418,4.437,4.455,4.471,4.487,4.504,4.524,4.548,4.572,4.596,4.615,4.631,4.643,4.652,4.652,4.648,4.639,4.629,4.614,4.598,4.574,4.547,4.522,4.498,4.474,4.45,4.421,4.392,4.356,4.32,4.281,4.241,4.201,4.16,4.117,4.074,4.024,3.973,3.921,3.868,3.816,3.764,3.707,3.649,3.589,3.529,3.468,3.406,3.337,3.268,3.198,3.128,3.06,2.99,2.916,2.846,2.785,2.726,2.672,2.62,2.571,2.528,2.494,2.485,2.504,2.538,2.587,2.633,2.676,2.706,2.725,2.726,2.714,2.726,2.755,2.82,2.907,2.993,3.078,3.157,3.233,3.31,3.388,3.457,3.523,3.589,3.655,3.728,3.803,3.878,3.953,4.02,4.085,4.145,4.203,4.259,4.315,4.369,4.422,4.476,4.53,4.577,4.623,4.666,4.708,4.747,4.786,4.824,4.862,4.904,4.948,5.006,5.064,5.131,5.198,5.264,5.33,5.396,5.462,5.527,5.593,5.658,5.723,5.788,5.852,5.916,5.98,6.043,6.107,6.17,6.233,6.296,6.358,6.421,6.483,6.545,6.607,6.669,6.73,6.791,6.853,6.915,6.979,7.046,7.113,7.179,7.245,7.31,7.375,7.44,7.504,7.568,7.631,7.694,7.757,7.819,7.88,7.941],"earthEl":[0.197,0.236,0.276,0.315,0.355,0.396,0.436,0.477,0.519,0.56,0.602,0.644,0.687,0.729,0.772,0.816,0.859,0.903,0.947,0.991,1.036,1.081,1.126,1.171,1.217,1.263,1.309,1.355,1.402,1.449,1.496,1.543,1.591,1.639,1.687,1.735,1.784,1.832,1.881,1.93,1.98,2.029,2.079,2.129,2.179,2.23,2.28,2.331,2.382,2.433,2.484,2.536,2.588,2.639,2.691,2.744,2.796,2.849,2.901,2.954,3.007,3.06,3.113,3.167,3.221,3.274,3.328,3.382,3.436,3.491,3.545,3.599,3.654,3.709,3.764,3.819,3.874,3.929,3.984,4.04,4.095,4.151,4.206,4.262,4.318,4.374,4.43,4.486,4.542,4.598,4.654,4.71,4.767,4.823,4.879,4.936,4.992,5.049,5.105,5.162,5.219,5.275,5.332,5.388,5.445,5.502,5.558,5.615,5.672,5.728,5.785,5.841,5.898,5.954,6.011,6.067,6.124,6.18,6.236,6.293,6.349,6.405,6.461,6.517,6.573,6.628,6.684,6.74,6.795,6.851,6.906,6.961,7.016,7.071,7.126,7.18,7.235,7.289,7.343,7.398,7.451,7.505,7.559,7.612,7.665,7.718,7.771,7.824,7.876,7.928,7.98,8.032,8.083,8.134,8.185,8.236,8.287,8.337,8.387,8.436,8.486,8.535,8.584,8.632,8.681,8.728,8.776,8.823,8.87,8.917,8.963,9.009,9.054,9.1,9.144,9.189,9.233,9.276,9.32,9.363,9.405,9.447,9.489,9.53,9.57,9.611,9.651,9.69,9.729,9.767,9.805,9.843,9.88,9.916,9.952,9.987,10.022,10.057,10.091,10.124,10.157,10.189,10.221,10.252,10.282,10.312,10.342,10.371,10.399,10.426,10.453,10.48,10.506,10.531,10.555,10.579,10.602,10.625,10.647,10.668,10.689,10.709,10.728,10.747,10.765,10.782,10.798,10.814,10.829,10.844,10.857,10.87,10.883,10.894,10.905,10.915,10.925,10.933,10.941,10.948,10.955,10.96,10.965,10.969,10.973,10.975,10.977,10.978,10.979,10.978,10.977,10.975,10.972,10.969,10.964,10.959,10.953,10.947,10.939,10.931,10.922,10.912,10.902,10.89,10.878,10.865,10.852,10.837,10.822,10.806,10.789,10.772,10.754,10.735,10.715,10.694,10.673,10.651,10.628,10.604,10.58,10.555,10.529,10.502,10.475,10.447,10.418,10.389,10.359,10.328,10.296,10.264,10.231,10.197,10.163,10.128,10.092,10.056,10.018,9.981,9.942,9.903,9.864,9.823,9.782,9.741,9.698,9.656,9.612,9.568,9.524,9.479,9.433,9.386,9.34,9.292,9.244,9.196,9.147,9.097,9.047,8.996,8.945,8.894,8.842,8.789,8.736,8.683,8.629,8.575,8.52,8.465,8.409,8.353,8.297,8.24,8.183,8.125,8.067,8.009,7.95,7.891,7.832,7.772,7.712,7.652,7.591,7.531,7.47,7.408,7.346,7.285,7.222,7.16,7.097,7.035,6.972,6.908,6.845,6.781,6.717,6.653,6.589,6.525,6.461,6.396,6.331,6.266,6.202,6.137,6.071,6.006,5.941,5.875,5.81,5.745,5.679,5.613,5.548,5.482,5.416,5.351,5.285,5.219,5.154,5.088,5.023,4.957,4.891,4.826,4.76,4.695,4.63,4.564,4.499,4.434,4.369,4.304,4.24,4.175,4.11,4.046,3.982,3.918,3.854,3.79,3.726,3.662,3.599,3.536,3.473,3.41,3.348,3.285,3.223,3.161,3.099,3.038,2.976,2.915,2.854,2.794,2.733,2.673,2.613,2.554,2.494,2.435,2.376,2.318,2.26,2.202,2.144,2.087,2.03,1.973,1.916,1.86,1.804,1.749,1.694,1.639,1.585,1.531,1.477,1.423,1.37,1.318,1.265,1.213,1.162,1.11,1.059,1.009,0.959,0.909,0.86,0.811,0.762,0.714,0.666,0.619,0.572,0.526,0.479,0.434,0.388,0.344,0.299,0.255,0.212,0.168,0.126,0.083,0.042,0.0,-0.041,-0.081,-0.121,-0.161,-0.2,-0.239,-0.277,-0.315,-0.352,-0.389,-0.425,-0.461,-0.496,-0.531,-0.566,-0.6,-0.633,-0.666,-0.699,-0.731,-0.762,-0.794,-0.824,-0.854,-0.884,-0.913,-0.942,-0.97,-0.997,-1.025,-1.051,-1.077,-1.103,-1.128,-1.153,-1.177,-1.2,-1.224,-1.246,-1.268,-1.29,-1.311,-1.332,-1.352,-1.371,-1.39,-1.409,-1.427,-1.444,-1.461,-1.478,-1.494,-1.509,-1.524,-1.538,-1.552,-1.566,-1.579,-1.591,-1.603,-1.614,-1.625,-1.635,-1.645,-1.654,-1.663,-1.671,-1.679,-1.686,-1.693,-1.699,-1.704,-1.709,-1.714,-1.718,-1.722,-1.725,-1.727,-1.729,-1.731,-1.732,-1.733,-1.733,-1.732,-1.731,-1.73,-1.728,-1.725,-1.722,-1.718,-1.714,-1.71,-1.705,-1.699,-1.693,-1.687,-1.68,-1.672,-1.664,-1.656,-1.647,-1.638,-1.628,-1.617,-1.606,-1.595,-1.583,-1.571,-1.558,-1.545,-1.531,-1.517,-1.502,-1.487,-1.471,-1.455,-1.438,-1.421,-1.404,-1.386,-1.368,-1.349,-1.33,-1.31,-1.29,-1.269,-1.248,-1.226,-1.205,-1.182,-1.159,-1.136,-1.112,-1.088,-1.064,-1.039,-1.014,-0.988,-0.962,-0.935,-0.908,-0.881,-0.853,-0.824,-0.796,-0.767,-0.737,-0.708,-0.677,-0.647,-0.616,-0.584,-0.553,-0.521,-0.488,-0.455,-0.422,-0.388,-0.355,-0.32,-0.286,-0.251,-0.215,-0.179,-0.143,-0.107,-0.07,-0.033,0.004,0.042,0.08,0.119,0.157,0.196,0.236,0.275,0.315,0.356,0.396,0.437,0.478,0.52,0.562,0.604,0.646,0.689,0.732,0.775,0.818,0.862,0.906,0.951,0.995,1.04,1.085,1.13,1.176,1.222,1.268,1.314,1.361,1.407,1.455,1.502,1.549,1.597,1.645,1.693,1.741,1.79,1.839,1.888,1.937,1.986,2.036,2.085,2.135,2.185,2.236,2.286,2.337,2.388,2.439,2.49,2.541,2.592,2.644,2.696,2.748,2.8,2.852,2.904,2.957,3.009,3.062,3.115,3.168,3.221,3.274,3.328,3.381,3.435,3.488,3.542,3.596],"earthAz":[328.3,328.2,328.2,328.1,328.0,328.0,327.9,327.9,327.8,327.7,327.7,327.6,327.6,327.5,327.4,327.4,327.3,327.3,327.2,327.1,327.1,327.0,327.0,326.9,326.8,326.8,326.7,326.6,326.6,326.5,326.5,326.4,326.3,326.3,326.2,326.2,326.1,326.1,326.0,325.9,325.9,325.8,325.8,325.7,325.6,325.6,325.5,325.5,325.4,325.3,325.3,325.2,325.2,325.1,325.1,325.0,325.0,324.9,324.8,324.8,324.7,324.7,324.6,324.6,324.5,324.5,324.4,324.4,324.3,324.2,324.2,324.1,324.1,324.0,324.0,323.9,323.9,323.8,323.8,323.7,323.7,323.6,323.6,323.6,323.5,323.5,323.4,323.4,323.3,323.3,323.2,323.2,323.2,323.1,323.1,323.0,323.0,322.9,322.9,322.9,322.8,322.8,322.8,322.7,322.7,322.6,322.6,322.6,322.5,322.5,322.5,322.5,322.4,322.4,322.4,322.3,322.3,322.3,322.2,322.2,322.2,322.2,322.1,322.1,322.1,322.1,322.1,322.0,322.0,322.0,322.0,322.0,321.9,321.9,321.9,321.9,321.9,321.9,321.9,321.9,321.8,321.8,321.8,321.8,321.8,321.8,321.8,321.8,321.8,321.8,321.8,321.8,321.8,321.8,321.8,321.8,321.8,321.8,321.8,321.8,321.8,321.8,321.8,321.9,321.9,321.9,321.9,321.9,321.9,321.9,321.9,322.0,322.0,322.0,322.0,322.0,322.1,322.1,322.1,322.1,322.2,322.2,322.2,322.2,322.3,322.3,322.3,322.4,322.4,322.4,322.5,322.5,322.5,322.6,322.6,322.7,322.7,322.7,322.8,322.8,322.9,322.9,323.0,323.0,323.1,323.1,323.2,323.2,323.3,323.3,323.4,323.4,323.5,323.5,323.6,323.6,323.7,323.8,323.8,323.9,323.9,324.0,324.1,324.1,324.2,324.2,324.3,324.4,324.4,324.5,324.6,324.6,324.7,324.8,324.9,324.9,325.0,325.1,325.1,325.2,325.3,325.4,325.4,325.5,325.6,325.7,325.7,325.8,325.9,326.0,326.1,326.1,326.2,326.3,326.4,326.5,326.5,326.6,326.7,326.8,326.9,326.9,327.0,327.1,327.2,327.3,327.4,327.4,327.5,327.6,327.7,327.8,327.9,327.9,328.0,328.1,328.2,328.3,328.4,328.5,328.5,328.6,328.7,328.8,328.9,329.0,329.0,329.1,329.2,329.3,329.4,329.5,329.6,329.6,329.7,329.8,329.9,330.0,330.1,330.1,330.2,330.3,330.4,330.5,330.5,330.6,330.7,330.8,330.9,331.0,331.0,331.1,331.2,331.3,331.3,331.4,331.5,331.6,331.7,331.7,331.8,331.9,332.0,332.0,332.1,332.2,332.2,332.3,332.4,332.5,332.5,332.6,332.7,332.7,332.8,332.9,332.9,333.0,333.1,333.1,333.2,333.3,333.3,333.4,333.4,333.5,333.6,333.6,333.7,333.7,333.8,333.9,333.9,334.0,334.0,334.1,334.1,334.2,334.2,334.3,334.3,334.4,334.4,334.5,334.5,334.6,334.6,334.7,334.7,334.8,334.8,334.9,334.9,335.0,335.0,335.0,335.1,335.1,335.2,335.2,335.2,335.3,335.3,335.3,335.4,335.4,335.4,335.5,335.5,335.5,335.6,335.6,335.6,335.7,335.7,335.7,335.7,335.8,335.8,335.8,335.8,335.9,335.9,335.9,335.9,336.0,336.0,336.0,336.0,336.0,336.1,336.1,336.1,336.1,336.1,336.1,336.2,336.2,336.2,336.2,336.2,336.2,336.2,336.2,336.2,336.3,336.3,336.3,336.3,336.3,336.3,336.3,336.3,336.3,336.3,336.3,336.3,336.3,336.3,336.3,336.3,336.3,336.3,336.3,336.3,336.3,336.3,336.3,336.3,336.3,336.3,336.3,336.3,336.3,336.3,336.3,336.3,336.3,336.3,336.3,336.3,336.2,336.2,336.2,336.2,336.2,336.2,336.2,336.2,336.2,336.1,336.1,336.1,336.1,336.1,336.1,336.1,336.0,336.0,336.0,336.0,336.0,336.0,335.9,335.9,335.9,335.9,335.9,335.9,335.8,335.8,335.8,335.8,335.8,335.7,335.7,335.7,335.7,335.6,335.6,335.6,335.6,335.5,335.5,335.5,335.5,335.4,335.4,335.4,335.4,335.3,335.3,335.3,335.3,335.2,335.2,335.2,335.2,335.1,335.1,335.1,335.0,335.0,335.0,334.9,334.9,334.9,334.8,334.8,334.8,334.8,334.7,334.7,334.7,334.6,334.6,334.6,334.5,334.5,334.4,334.4,334.4,334.3,334.3,334.3,334.2,334.2,334.2,334.1,334.1,334.0,334.0,334.0,333.9,333.9,333.9,333.8,333.8,333.7,333.7,333.7,333.6,333.6,333.5,333.5,333.4,333.4,333.4,333.3,333.3,333.2,333.2,333.1,333.1,333.1,333.0,333.0,332.9,332.9,332.8,332.8,332.7,332.7,332.7,332.6,332.6,332.5,332.5,332.4,332.4,332.3,332.3,332.2,332.2,332.1,332.1,332.0,332.0,331.9,331.9,331.8,331.8,331.7,331.7,331.6,331.6,331.5,331.5,331.4,331.4,331.3,331.3,331.2,331.2,331.1,331.1,331.0,331.0,330.9,330.9,330.8,330.7,330.7,330.6,330.6,330.5,330.5,330.4,330.4,330.3,330.3,330.2,330.1,330.1,330.0,330.0,329.9,329.9,329.8,329.7,329.7,329.6,329.6,329.5,329.5,329.4,329.3,329.3,329.2,329.2,329.1,329.0,329.0,328.9,328.9,328.8,328.7,328.7,328.6,328.6,328.5,328.4,328.4,328.3,328.3,328.2,328.1,328.1,328.0,328.0,327.9,327.8,327.8,327.7,327.7,327.6,327.5,327.5,327.4,327.4,327.3,327.2,327.2,327.1,327.0,327.0,326.9,326.9,326.8,326.7,326.7,326.6,326.6,326.5,326.4,326.4,326.3,326.3,326.2,326.1,326.1,326.0,325.9,325.9,325.8,325.8,325.7,325.6,325.6,325.5,325.5,325.4,325.3,325.3,325.2,325.2,325.1,325.1,325.0,324.9,324.9],"earthHz":[1.606,1.596,1.587,1.578,1.568,1.559,1.549,1.54,1.53,1.521,1.511,1.502,1.492,1.483,1.473,1.464,1.454,1.445,1.435,1.426,1.416,1.407,1.397,1.388,1.378,1.369,1.359,1.35,1.34,1.331,1.321,1.312,1.302,1.293,1.283,1.274,1.264,1.255,1.246,1.236,1.227,1.218,1.208,1.199,1.19,1.181,1.171,1.162,1.153,1.144,1.135,1.126,1.117,1.108,1.099,1.09,1.081,1.072,1.064,1.055,1.046,1.038,1.029,1.02,1.012,1.003,0.995,0.987,0.978,0.97,0.962,0.954,0.945,0.937,0.929,0.921,0.914,0.906,0.898,0.89,0.883,0.875,0.868,0.86,0.853,0.846,0.838,0.831,0.824,0.817,0.81,0.803,0.797,0.79,0.783,0.777,0.771,0.764,0.758,0.752,0.746,0.74,0.734,0.728,0.722,0.717,0.711,0.706,0.701,0.695,0.69,0.685,0.68,0.675,0.671,0.666,0.662,0.657,0.653,0.649,0.645,0.641,0.637,0.633,0.63,0.626,0.623,0.62,0.617,0.614,0.612,0.611,0.61,0.609,0.607,0.606,0.605,0.604,0.603,0.603,0.602,0.601,0.6,0.6,0.599,0.599,0.598,0.598,0.598,0.598,0.598,0.598,0.598,0.598,0.598,0.598,0.598,0.599,0.599,0.6,0.6,0.601,0.601,0.602,0.603,0.604,0.605,0.606,0.607,0.608,0.61,0.611,0.612,0.614,0.617,0.621,0.624,0.628,0.631,0.635,0.64,0.644,0.648,0.653,0.657,0.662,0.667,0.672,0.678,0.683,0.689,0.694,0.7,0.706,0.712,0.719,0.725,0.732,0.738,0.745,0.752,0.759,0.767,0.774,0.781,0.789,0.797,0.805,0.813,0.821,0.83,0.838,0.847,0.855,0.864,0.873,0.882,0.892,0.901,0.91,0.92,0.93,0.94,0.949,0.96,0.97,0.98,0.99,1.001,1.011,1.022,1.033,1.044,1.055,1.066,1.077,1.088,1.1,1.111,1.123,1.135,1.146,1.158,1.17,1.182,1.194,1.206,1.218,1.231,1.243,1.255,1.268,1.28,1.293,1.306,1.318,1.331,1.344,1.357,1.37,1.382,1.395,1.409,1.422,1.435,1.448,1.461,1.474,1.487,1.501,1.514,1.527,1.541,1.554,1.567,1.581,1.594,1.607,1.621,1.634,1.647,1.661,1.674,1.687,1.701,1.714,1.727,1.741,1.754,1.767,1.781,1.794,1.807,1.82,1.833,1.846,1.86,1.873,1.886,1.899,1.912,1.924,1.937,1.95,1.963,1.976,1.988,2.001,2.013,2.026,2.038,2.051,2.063,2.075,2.087,2.099,2.111,2.123,2.135,2.147,2.159,2.171,2.182,2.194,2.205,2.217,2.228,2.239,2.25,2.261,2.272,2.283,2.294,2.304,2.315,2.326,2.336,2.346,2.357,2.367,2.377,2.387,2.397,2.406,2.416,2.425,2.435,2.444,2.454,2.463,2.472,2.481,2.49,2.498,2.507,2.516,2.524,2.532,2.54,2.549,2.557,2.565,2.572,2.58,2.588,2.595,2.602,2.61,2.617,2.624,2.631,2.638,2.644,2.651,2.658,2.664,2.67,2.677,2.683,2.689,2.695,2.7,2.706,2.712,2.717,2.722,2.728,2.733,2.738,2.743,2.748,2.752,2.757,2.761,2.766,2.77,2.774,2.778,2.782,2.786,2.79,2.794,2.797,2.801,2.804,2.808,2.811,2.814,2.817,2.82,2.823,2.826,2.828,2.831,2.833,2.835,2.838,2.84,2.842,2.844,2.846,2.848,2.849,2.851,2.853,2.854,2.855,2.857,2.858,2.859,2.86,2.861,2.862,2.862,2.863,2.864,2.864,2.865,2.865,2.865,2.865,2.866,2.866,2.866,2.865,2.865,2.865,2.865,2.864,2.864,2.863,2.862,2.862,2.861,2.86,2.859,2.858,2.857,2.856,2.855,2.853,2.852,2.851,2.849,2.848,2.846,2.844,2.843,2.841,2.839,2.837,2.835,2.833,2.831,2.829,2.826,2.824,2.822,2.819,2.817,2.814,2.812,2.809,2.806,2.803,2.801,2.798,2.795,2.792,2.789,2.786,2.782,2.779,2.776,2.773,2.769,2.766,2.762,2.759,2.755,2.751,2.748,2.744,2.74,2.736,2.732,2.728,2.724,2.72,2.716,2.712,2.708,2.704,2.7,2.695,2.691,2.686,2.682,2.677,2.673,2.668,2.664,2.659,2.654,2.649,2.645,2.64,2.635,2.63,2.625,2.62,2.615,2.609,2.604,2.599,2.594,2.588,2.583,2.578,2.572,2.567,2.561,2.556,2.55,2.544,2.539,2.533,2.527,2.521,2.516,2.51,2.504,2.498,2.492,2.486,2.48,2.473,2.467,2.461,2.455,2.448,2.442,2.436,2.429,2.423,2.416,2.41,2.403,2.397,2.39,2.383,2.377,2.37,2.363,2.356,2.349,2.342,2.335,2.328,2.321,2.314,2.307,2.3,2.293,2.286,2.278,2.271,2.264,2.256,2.249,2.242,2.234,2.227,2.219,2.212,2.204,2.196,2.189,2.181,2.173,2.165,2.157,2.15,2.142,2.134,2.126,2.118,2.11,2.102,2.094,2.086,2.077,2.069,2.061,2.053,2.044,2.036,2.028,2.019,2.011,2.002,1.994,1.985,1.977,1.968,1.96,1.951,1.942,1.934,1.925,1.916,1.908,1.899,1.89,1.881,1.872,1.863,1.854,1.845,1.836,1.827,1.818,1.809,1.8,1.791,1.782,1.773,1.764,1.754,1.745,1.736,1.727,1.717,1.708,1.699,1.689,1.68,1.671,1.661,1.652,1.642,1.633,1.624,1.614,1.605,1.595,1.586,1.576,1.567,1.557,1.547,1.538,1.528,1.519,1.509,1.499,1.49,1.48,1.471,1.461,1.451,1.442,1.432,1.422,1.413,1.403,1.393,1.384,1.374,1.364,1.355,1.345,1.335,1.326,1.316,1.306,1.297,1.287,1.278,1.268,1.258,1.249,1.239,1.23,1.22,1.21,1.201,1.191,1.182,1.172,1.163,1.154,1.144,1.135,1.125,1.116,1.107,1.097,1.088,1.079,1.07],"f":{"sun":"0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000011111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111110000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000","earth":"0000000000000000000000000001111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000111111111111111111111111111111111111111111","both":"0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000011111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111110000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"}},"NR-03":{"name":"Nobile Rim 1 vicinity sample","lat":-85.4,"lon":37.3,"h20":5898.3085,"slope":13.4152,"slopeMax":15.2714,"span":22.1299,"sunEl":[1.606,1.647,1.688,1.729,1.769,1.81,1.851,1.891,1.932,1.972,2.013,2.053,2.094,2.134,2.175,2.215,2.255,2.295,2.336,2.376,2.416,2.456,2.496,2.535,2.575,2.615,2.654,2.694,2.733,2.772,2.812,2.851,2.89,2.929,2.967,3.006,3.044,3.083,3.121,3.159,3.197,3.235,3.273,3.311,3.348,3.386,3.423,3.46,3.497,3.534,3.57,3.607,3.643,3.679,3.715,3.751,3.787,3.822,3.857,3.892,3.927,3.962,3.997,4.031,4.065,4.099,4.133,4.166,4.2,4.233,4.266,4.298,4.331,4.363,4.395,4.427,4.459,4.49,4.521,4.552,4.583,4.613,4.643,4.673,4.703,4.732,4.762,4.79,4.819,4.848,4.876,4.904,4.931,4.959,4.986,5.013,5.039,5.066,5.092,5.117,5.143,5.168,5.193,5.218,5.242,5.266,5.29,5.313,5.336,5.359,5.382,5.404,5.426,5.447,5.469,5.49,5.511,5.531,5.551,5.571,5.59,5.61,5.628,5.647,5.665,5.683,5.7,5.718,5.735,5.751,5.767,5.783,5.799,5.814,5.829,5.843,5.858,5.872,5.885,5.898,5.911,5.924,5.936,5.948,5.959,5.97,5.981,5.991,6.002,6.011,6.021,6.03,6.038,6.047,6.055,6.062,6.07,6.076,6.083,6.089,6.095,6.1,6.106,6.11,6.115,6.119,6.122,6.126,6.129,6.131,6.134,6.135,6.137,6.138,6.139,6.139,6.139,6.139,6.138,6.137,6.136,6.134,6.132,6.13,6.127,6.124,6.12,6.116,6.112,6.107,6.103,6.097,6.091,6.085,6.079,6.072,6.065,6.058,6.05,6.042,6.033,6.024,6.015,6.005,5.995,5.985,5.974,5.963,5.952,5.94,5.928,5.916,5.903,5.89,5.877,5.863,5.849,5.834,5.82,5.805,5.789,5.773,5.757,5.741,5.724,5.707,5.69,5.672,5.654,5.635,5.617,5.598,5.578,5.558,5.538,5.518,5.498,5.477,5.455,5.434,5.412,5.39,5.367,5.345,5.322,5.298,5.274,5.251,5.226,5.202,5.177,5.152,5.126,5.101,5.075,5.049,5.022,4.995,4.968,4.941,4.913,4.885,4.857,4.829,4.8,4.771,4.742,4.713,4.683,4.653,4.623,4.593,4.562,4.531,4.5,4.469,4.437,4.405,4.373,4.341,4.309,4.276,4.243,4.21,4.177,4.143,4.109,4.076,4.041,4.007,3.973,3.938,3.903,3.868,3.833,3.797,3.761,3.726,3.69,3.653,3.617,3.581,3.544,3.507,3.47,3.433,3.396,3.358,3.321,3.283,3.245,3.207,3.169,3.131,3.093,3.054,3.016,2.977,2.938,2.899,2.86,2.821,2.781,2.742,2.703,2.663,2.623,2.584,2.544,2.504,2.464,2.424,2.384,2.344,2.303,2.263,2.223,2.182,2.142,2.101,2.061,2.02,1.979,1.939,1.898,1.857,1.816,1.775,1.735,1.694,1.653,1.612,1.571,1.53,1.489,1.448,1.407,1.367,1.326,1.285,1.244,1.203,1.162,1.121,1.081,1.04,0.999,0.959,0.918,0.877,0.837,0.796,0.756,0.716,0.675,0.635,0.595,0.555,0.515,0.475,0.435,0.395,0.355,0.316,0.276,0.237,0.198,0.158,0.119,0.08,0.041,0.002,-0.036,-0.075,-0.113,-0.152,-0.19,-0.228,-0.266,-0.304,-0.341,-0.379,-0.416,-0.453,-0.49,-0.527,-0.564,-0.601,-0.637,-0.673,-0.709,-0.745,-0.781,-0.817,-0.852,-0.887,-0.922,-0.957,-0.992,-1.026,-1.061,-1.095,-1.129,-1.162,-1.196,-1.229,-1.262,-1.295,-1.327,-1.36,-1.392,-1.424,-1.456,-1.487,-1.518,-1.549,-1.58,-1.611,-1.641,-1.671,-1.701,-1.73,-1.76,-1.789,-1.818,-1.846,-1.875,-1.903,-1.93,-1.958,-1.985,-2.012,-2.039,-2.065,-2.091,-2.117,-2.143,-2.168,-2.193,-2.218,-2.242,-2.266,-2.29,-2.314,-2.337,-2.36,-2.383,-2.405,-2.427,-2.449,-2.471,-2.492,-2.513,-2.533,-2.553,-2.573,-2.593,-2.612,-2.631,-2.65,-2.668,-2.686,-2.704,-2.721,-2.738,-2.755,-2.771,-2.787,-2.803,-2.818,-2.833,-2.848,-2.862,-2.876,-2.89,-2.903,-2.916,-2.929,-2.941,-2.953,-2.965,-2.976,-2.987,-2.997,-3.008,-3.017,-3.027,-3.036,-3.045,-3.053,-3.061,-3.069,-3.077,-3.084,-3.09,-3.097,-3.103,-3.108,-3.114,-3.118,-3.123,-3.127,-3.131,-3.134,-3.138,-3.14,-3.143,-3.145,-3.146,-3.148,-3.149,-3.149,-3.149,-3.149,-3.149,-3.148,-3.147,-3.145,-3.143,-3.141,-3.138,-3.135,-3.132,-3.128,-3.124,-3.12,-3.115,-3.11,-3.104,-3.098,-3.092,-3.086,-3.079,-3.071,-3.064,-3.056,-3.047,-3.039,-3.03,-3.02,-3.01,-3.0,-2.99,-2.979,-2.968,-2.956,-2.945,-2.932,-2.92,-2.907,-2.894,-2.88,-2.867,-2.852,-2.838,-2.823,-2.808,-2.792,-2.776,-2.76,-2.744,-2.727,-2.71,-2.692,-2.674,-2.656,-2.638,-2.619,-2.6,-2.58,-2.561,-2.541,-2.52,-2.499,-2.479,-2.457,-2.436,-2.414,-2.392,-2.369,-2.346,-2.323,-2.3,-2.276,-2.252,-2.228,-2.204,-2.179,-2.154,-2.128,-2.103,-2.077,-2.051,-2.024,-1.998,-1.971,-1.943,-1.916,-1.888,-1.86,-1.832,-1.803,-1.774,-1.745,-1.716,-1.687,-1.657,-1.627,-1.597,-1.566,-1.535,-1.505,-1.473,-1.442,-1.41,-1.379,-1.347,-1.314,-1.282,-1.249,-1.216,-1.183,-1.15,-1.116,-1.083,-1.049,-1.015,-0.981,-0.946,-0.911,-0.877,-0.842,-0.807,-0.771,-0.736,-0.7,-0.664,-0.628,-0.592,-0.556,-0.519,-0.483,-0.446,-0.409,-0.372,-0.335,-0.298,-0.26,-0.223,-0.185,-0.147,-0.109,-0.071,-0.033,0.005,0.043,0.082,0.12,0.159,0.198,0.237,0.276,0.315,0.354,0.393,0.432,0.472,0.511,0.551,0.59,0.63,0.669,0.709,0.749,0.789,0.828,0.868,0.908,0.948,0.988,1.028,1.068,1.108,1.149,1.189,1.229,1.269,1.309,1.349,1.389,1.43,1.47,1.51,1.55,1.59,1.63,1.67,1.71,1.75,1.79,1.83],"sunAz":[89.4,88.9,88.4,87.9,87.4,86.9,86.4,85.9,85.4,84.9,84.4,83.9,83.4,82.9,82.4,81.9,81.3,80.8,80.3,79.8,79.3,78.8,78.3,77.8,77.3,76.8,76.3,75.8,75.3,74.8,74.3,73.7,73.2,72.7,72.2,71.7,71.2,70.7,70.2,69.7,69.2,68.7,68.2,67.7,67.2,66.7,66.1,65.6,65.1,64.6,64.1,63.6,63.1,62.6,62.1,61.6,61.1,60.6,60.1,59.6,59.1,58.5,58.0,57.5,57.0,56.5,56.0,55.5,55.0,54.5,54.0,53.5,53.0,52.5,52.0,51.4,50.9,50.4,49.9,49.4,48.9,48.4,47.9,47.4,46.9,46.4,45.9,45.4,44.8,44.3,43.8,43.3,42.8,42.3,41.8,41.3,40.8,40.3,39.8,39.3,38.8,38.2,37.7,37.2,36.7,36.2,35.7,35.2,34.7,34.2,33.7,33.2,32.7,32.1,31.6,31.1,30.6,30.1,29.6,29.1,28.6,28.1,27.6,27.1,26.6,26.0,25.5,25.0,24.5,24.0,23.5,23.0,22.5,22.0,21.5,21.0,20.5,19.9,19.4,18.9,18.4,17.9,17.4,16.9,16.4,15.9,15.4,14.9,14.3,13.8,13.3,12.8,12.3,11.8,11.3,10.8,10.3,9.8,9.3,8.8,8.2,7.7,7.2,6.7,6.2,5.7,5.2,4.7,4.2,3.7,3.2,2.6,2.1,1.6,1.1,0.6,0.1,359.6,359.1,358.6,358.1,357.6,357.1,356.5,356.0,355.5,355.0,354.5,354.0,353.5,353.0,352.5,352.0,351.5,350.9,350.4,349.9,349.4,348.9,348.4,347.9,347.4,346.9,346.4,345.9,345.4,344.9,344.3,343.8,343.3,342.8,342.3,341.8,341.3,340.8,340.3,339.8,339.3,338.8,338.2,337.7,337.2,336.7,336.2,335.7,335.2,334.7,334.2,333.7,333.2,332.7,332.2,331.6,331.1,330.6,330.1,329.6,329.1,328.6,328.1,327.6,327.1,326.6,326.1,325.6,325.1,324.6,324.0,323.5,323.0,322.5,322.0,321.5,321.0,320.5,320.0,319.5,319.0,318.5,318.0,317.5,317.0,316.4,315.9,315.4,314.9,314.4,313.9,313.4,312.9,312.4,311.9,311.4,310.9,310.4,309.9,309.4,308.9,308.3,307.8,307.3,306.8,306.3,305.8,305.3,304.8,304.3,303.8,303.3,302.8,302.3,301.8,301.3,300.8,300.3,299.8,299.3,298.7,298.2,297.7,297.2,296.7,296.2,295.7,295.2,294.7,294.2,293.7,293.2,292.7,292.2,291.7,291.2,290.7,290.2,289.7,289.2,288.6,288.1,287.6,287.1,286.6,286.1,285.6,285.1,284.6,284.1,283.6,283.1,282.6,282.1,281.6,281.1,280.6,280.1,279.6,279.1,278.6,278.1,277.5,277.0,276.5,276.0,275.5,275.0,274.5,274.0,273.5,273.0,272.5,272.0,271.5,271.0,270.5,270.0,269.5,269.0,268.5,268.0,267.5,267.0,266.5,265.9,265.4,264.9,264.4,263.9,263.4,262.9,262.4,261.9,261.4,260.9,260.4,259.9,259.4,258.9,258.4,257.9,257.4,256.9,256.4,255.9,255.4,254.9,254.3,253.8,253.3,252.8,252.3,251.8,251.3,250.8,250.3,249.8,249.3,248.8,248.3,247.8,247.3,246.8,246.3,245.8,245.3,244.8,244.2,243.7,243.2,242.7,242.2,241.7,241.2,240.7,240.2,239.7,239.2,238.7,238.2,237.7,237.2,236.7,236.2,235.7,235.2,234.6,234.1,233.6,233.1,232.6,232.1,231.6,231.1,230.6,230.1,229.6,229.1,228.6,228.1,227.6,227.1,226.6,226.0,225.5,225.0,224.5,224.0,223.5,223.0,222.5,222.0,221.5,221.0,220.5,220.0,219.5,219.0,218.4,217.9,217.4,216.9,216.4,215.9,215.4,214.9,214.4,213.9,213.4,212.9,212.4,211.9,211.4,210.8,210.3,209.8,209.3,208.8,208.3,207.8,207.3,206.8,206.3,205.8,205.3,204.8,204.2,203.7,203.2,202.7,202.2,201.7,201.2,200.7,200.2,199.7,199.2,198.7,198.2,197.6,197.1,196.6,196.1,195.6,195.1,194.6,194.1,193.6,193.1,192.6,192.1,191.6,191.0,190.5,190.0,189.5,189.0,188.5,188.0,187.5,187.0,186.5,186.0,185.5,184.9,184.4,183.9,183.4,182.9,182.4,181.9,181.4,180.9,180.4,179.9,179.4,178.8,178.3,177.8,177.3,176.8,176.3,175.8,175.3,174.8,174.3,173.8,173.3,172.7,172.2,171.7,171.2,170.7,170.2,169.7,169.2,168.7,168.2,167.7,167.1,166.6,166.1,165.6,165.1,164.6,164.1,163.6,163.1,162.6,162.1,161.6,161.0,160.5,160.0,159.5,159.0,158.5,158.0,157.5,157.0,156.5,156.0,155.5,155.0,154.4,153.9,153.4,152.9,152.4,151.9,151.4,150.9,150.4,149.9,149.4,148.9,148.3,147.8,147.3,146.8,146.3,145.8,145.3,144.8,144.3,143.8,143.3,142.8,142.3,141.7,141.2,140.7,140.2,139.7,139.2,138.7,138.2,137.7,137.2,136.7,136.2,135.7,135.2,134.6,134.1,133.6,133.1,132.6,132.1,131.6,131.1,130.6,130.1,129.6,129.1,128.6,128.1,127.5,127.0,126.5,126.0,125.5,125.0,124.5,124.0,123.5,123.0,122.5,122.0,121.5,121.0,120.4,119.9,119.4,118.9,118.4,117.9,117.4,116.9,116.4,115.9,115.4,114.9,114.4,113.9,113.4,112.9,112.3,111.8,111.3,110.8,110.3,109.8,109.3,108.8,108.3,107.8,107.3,106.8,106.3,105.8,105.3,104.8,104.2,103.7,103.2,102.7,102.2,101.7,101.2,100.7,100.2,99.7,99.2,98.7,98.2,97.7,97.2,96.7,96.2,95.6,95.1,94.6,94.1,93.6,93.1,92.6,92.1,91.6,91.1,90.6,90.1,89.6,89.1,88.6,88.1,87.6,87.0,86.5,86.0,85.5,85.0,84.5],"sunHz":[-4.973,-4.87,-4.9,-4.929,-4.951,-4.976,-5.011,-5.046,-5.079,-5.122,-5.199,-5.252,-5.228,-5.212,-5.222,-5.234,-5.251,-5.246,-5.195,-5.149,-5.113,-5.083,-5.065,-5.041,-5.011,-4.989,-4.98,-4.987,-5.012,-5.009,-4.975,-4.947,-4.926,-4.911,-4.903,-4.859,-4.786,-4.742,-4.718,-4.638,-4.519,-4.393,-4.261,-4.129,-3.996,-3.862,-3.728,-3.594,-3.459,-3.324,-3.188,-3.052,-2.915,-2.778,-2.64,-2.503,-2.364,-2.227,-2.09,-1.954,-1.818,-1.682,-1.546,-1.409,-1.272,-1.135,-0.998,-0.861,-0.723,-0.586,-0.448,-0.31,-0.172,-0.034,0.106,0.264,0.421,0.577,0.733,0.889,1.045,1.198,1.354,1.515,1.678,1.845,2.013,2.187,2.36,2.534,2.706,2.877,3.046,3.216,3.384,3.551,3.707,3.851,3.994,4.137,4.28,4.423,4.564,4.705,4.845,4.985,5.131,5.281,5.437,5.596,5.765,5.938,6.118,6.3,6.461,6.613,6.757,6.899,7.055,7.217,7.376,7.535,7.692,7.85,8.003,8.155,8.287,8.417,8.572,8.728,8.888,9.048,9.199,9.349,9.505,9.662,9.828,9.994,10.158,10.319,10.468,10.619,10.778,10.936,11.087,11.234,11.366,11.496,11.62,11.746,11.876,12.023,12.202,12.376,12.544,12.714,12.885,13.053,13.215,13.374,13.528,13.683,13.84,13.987,14.127,14.269,14.414,14.549,14.68,14.812,14.946,15.071,15.193,15.316,15.44,15.567,15.695,15.823,15.951,16.079,16.206,16.335,16.464,16.594,16.723,16.844,16.964,17.053,17.141,17.218,17.296,17.373,17.449,17.503,17.557,17.606,17.654,17.697,17.741,17.794,17.847,17.899,17.95,17.999,18.046,18.089,18.131,18.169,18.199,18.213,18.225,18.235,18.242,18.246,18.248,18.246,18.245,18.245,18.244,18.241,18.235,18.225,18.211,18.193,18.172,18.15,18.121,18.085,18.05,18.015,17.978,17.94,17.894,17.844,17.793,17.74,17.687,17.634,17.578,17.523,17.467,17.412,17.369,17.328,17.285,17.241,17.195,17.149,17.085,17.02,16.951,16.882,16.821,16.76,16.738,16.716,16.686,16.657,16.634,16.613,16.612,16.611,16.608,16.603,16.586,16.569,16.55,16.531,16.509,16.487,16.463,16.439,16.415,16.39,16.364,16.339,16.312,16.282,16.247,16.211,16.173,16.134,16.094,16.053,16.011,15.968,15.921,15.874,15.828,15.782,15.739,15.698,15.658,15.618,15.576,15.533,15.489,15.441,15.391,15.34,15.287,15.235,15.182,15.128,15.074,15.018,14.961,14.904,14.845,14.786,14.725,14.664,14.601,14.538,14.474,14.408,14.342,14.276,14.21,14.148,14.089,14.028,13.967,13.904,13.84,13.774,13.708,13.64,13.571,13.502,13.434,13.366,13.298,13.23,13.163,13.095,13.027,12.955,12.882,12.809,12.735,12.661,12.586,12.511,12.435,12.359,12.282,12.205,12.128,12.05,11.972,11.893,11.814,11.734,11.654,11.57,11.488,11.434,11.382,11.347,11.311,11.266,11.22,11.17,11.12,11.075,11.026,10.951,10.874,10.782,10.685,10.564,10.452,10.38,10.312,10.263,10.214,10.16,10.105,10.047,9.988,9.924,9.86,9.796,9.734,9.676,9.622,9.575,9.531,9.492,9.45,9.406,9.354,9.29,9.231,9.18,9.136,9.1,9.061,9.018,8.978,8.942,8.9,8.852,8.804,8.755,8.708,8.661,8.618,8.578,8.537,8.494,8.445,8.39,8.335,8.279,8.224,8.17,8.112,8.052,7.993,7.935,7.879,7.825,7.772,7.718,7.655,7.589,7.52,7.45,7.391,7.335,7.286,7.238,7.177,7.111,7.053,6.995,6.955,6.917,6.88,6.842,6.798,6.753,6.699,6.644,6.582,6.52,6.457,6.395,6.337,6.279,6.228,6.178,6.151,6.125,6.106,6.087,6.063,6.04,6.015,5.991,5.967,5.942,5.917,5.893,5.868,5.843,5.817,5.79,5.759,5.728,5.696,5.666,5.644,5.622,5.602,5.582,5.56,5.536,5.51,5.481,5.447,5.416,5.386,5.364,5.348,5.338,5.332,5.326,5.321,5.314,5.305,5.281,5.248,5.215,5.18,5.155,5.134,5.12,5.108,5.097,5.087,5.059,5.026,4.991,4.956,4.93,4.906,4.899,4.893,4.885,4.875,4.865,4.855,4.848,4.84,4.835,4.829,4.82,4.809,4.774,4.74,4.714,4.691,4.679,4.662,4.625,4.589,4.553,4.519,4.492,4.468,4.451,4.435,4.42,4.406,4.392,4.371,4.339,4.313,4.294,4.275,4.254,4.233,4.213,4.194,4.178,4.16,4.139,4.125,4.116,4.102,4.085,4.067,4.049,4.029,4.009,3.986,3.963,3.945,3.927,3.906,3.883,3.869,3.856,3.835,3.812,3.766,3.718,3.668,3.618,3.522,3.424,3.322,3.221,3.118,3.016,2.925,2.834,2.759,2.682,2.586,2.49,2.386,2.276,2.14,2.003,1.863,1.726,1.596,1.462,1.317,1.171,1.024,0.871,0.706,0.537,0.36,0.186,0.015,-0.152,-0.315,-0.479,-0.646,-0.811,-0.974,-1.132,-1.283,-1.438,-1.596,-1.773,-1.965,-2.155,-2.344,-2.542,-2.747,-2.947,-3.145,-3.34,-3.534,-3.727,-3.921,-4.114,-4.306,-4.5,-4.695,-4.89,-5.084,-5.153,-5.193,-5.167,-5.13,-5.126,-5.127,-5.044,-4.952,-5.015,-5.091,-5.16,-5.228,-5.267,-5.305,-5.265,-5.224,-5.143,-5.066,-5.036,-5.007,-4.996,-4.988,-4.995,-5.007,-5.046,-5.084,-5.118,-5.157,-5.222,-5.295,-5.395,-5.478,-5.505,-5.534,-5.565,-5.615,-5.709,-5.771,-5.765,-5.725,-5.619,-5.55,-5.545,-5.554,-5.586,-5.607,-5.61,-5.616,-5.624,-5.608,-5.564,-5.53,-5.504,-5.48,-5.456,-5.444,-5.444,-5.438,-5.426,-5.41,-5.392,-5.387,-5.389,-5.353,-5.295,-5.306,-5.353,-5.325,-5.261,-5.226,-5.204,-5.186,-5.168,-5.161,-5.158,-5.136,-5.109,-5.081,-5.053,-5.072,-5.101,-5.004,-4.883,-4.892,-4.922,-4.945,-4.967,-5.002,-5.037,-5.07,-5.103,-5.179],"earthEl":[-1.047,-1.008,-0.968,-0.928,-0.888,-0.848,-0.807,-0.766,-0.724,-0.683,-0.641,-0.598,-0.556,-0.513,-0.47,-0.426,-0.383,-0.339,-0.294,-0.25,-0.205,-0.16,-0.115,-0.069,-0.023,0.023,0.069,0.116,0.162,0.209,0.257,0.304,0.352,0.4,0.448,0.497,0.545,0.594,0.643,0.693,0.742,0.792,0.842,0.892,0.943,0.993,1.044,1.095,1.146,1.197,1.249,1.301,1.352,1.404,1.457,1.509,1.562,1.614,1.667,1.72,1.774,1.827,1.88,1.934,1.988,2.042,2.096,2.15,2.204,2.259,2.313,2.368,2.423,2.478,2.533,2.588,2.643,2.699,2.754,2.81,2.865,2.921,2.977,3.033,3.089,3.145,3.201,3.257,3.314,3.37,3.426,3.483,3.539,3.596,3.652,3.709,3.766,3.822,3.879,3.936,3.993,4.049,4.106,4.163,4.22,4.277,4.333,4.39,4.447,4.504,4.56,4.617,4.674,4.73,4.787,4.844,4.9,4.957,5.013,5.069,5.126,5.182,5.238,5.294,5.35,5.406,5.462,5.517,5.573,5.628,5.684,5.739,5.794,5.849,5.904,5.959,6.013,6.068,6.122,6.176,6.23,6.284,6.337,6.391,6.444,6.497,6.55,6.602,6.654,6.707,6.759,6.81,6.862,6.913,6.964,7.015,7.065,7.115,7.165,7.215,7.264,7.313,7.362,7.411,7.459,7.507,7.554,7.601,7.648,7.695,7.741,7.787,7.832,7.877,7.922,7.966,8.01,8.053,8.097,8.139,8.182,8.223,8.265,8.306,8.347,8.387,8.426,8.466,8.504,8.542,8.58,8.618,8.654,8.691,8.726,8.762,8.796,8.831,8.864,8.897,8.93,8.962,8.994,9.025,9.055,9.085,9.114,9.142,9.17,9.198,9.225,9.251,9.276,9.301,9.325,9.349,9.372,9.394,9.416,9.437,9.458,9.477,9.496,9.515,9.532,9.549,9.566,9.581,9.596,9.61,9.624,9.636,9.648,9.66,9.67,9.68,9.689,9.698,9.705,9.712,9.718,9.724,9.728,9.732,9.735,9.738,9.739,9.74,9.74,9.739,9.738,9.736,9.733,9.729,9.724,9.719,9.713,9.706,9.698,9.69,9.681,9.67,9.66,9.648,9.636,9.623,9.609,9.594,9.579,9.563,9.546,9.528,9.509,9.49,9.47,9.449,9.428,9.405,9.382,9.359,9.334,9.309,9.283,9.256,9.228,9.2,9.171,9.142,9.111,9.08,9.048,9.016,8.983,8.949,8.914,8.879,8.843,8.807,8.769,8.732,8.693,8.654,8.614,8.574,8.533,8.491,8.448,8.406,8.362,8.318,8.273,8.228,8.182,8.136,8.089,8.041,7.993,7.945,7.895,7.846,7.796,7.745,7.694,7.642,7.59,7.538,7.484,7.431,7.377,7.323,7.268,7.213,7.157,7.101,7.044,6.988,6.93,6.873,6.815,6.756,6.698,6.639,6.579,6.52,6.46,6.4,6.339,6.278,6.217,6.156,6.094,6.032,5.97,5.907,5.845,5.782,5.719,5.656,5.592,5.529,5.465,5.401,5.337,5.272,5.208,5.143,5.079,5.014,4.949,4.884,4.819,4.754,4.688,4.623,4.558,4.492,4.427,4.361,4.295,4.23,4.164,4.098,4.033,3.967,3.901,3.836,3.77,3.705,3.639,3.574,3.508,3.443,3.378,3.312,3.247,3.182,3.117,3.052,2.987,2.923,2.858,2.794,2.73,2.666,2.602,2.538,2.474,2.411,2.347,2.284,2.221,2.158,2.096,2.033,1.971,1.909,1.847,1.786,1.724,1.663,1.602,1.542,1.481,1.421,1.361,1.302,1.243,1.183,1.125,1.066,1.008,0.95,0.892,0.835,0.778,0.721,0.665,0.609,0.553,0.498,0.442,0.388,0.333,0.279,0.225,0.172,0.119,0.066,0.014,-0.038,-0.09,-0.141,-0.192,-0.243,-0.293,-0.342,-0.392,-0.441,-0.489,-0.537,-0.585,-0.632,-0.679,-0.726,-0.772,-0.818,-0.863,-0.908,-0.952,-0.996,-1.04,-1.083,-1.126,-1.168,-1.21,-1.251,-1.292,-1.333,-1.373,-1.412,-1.451,-1.49,-1.528,-1.566,-1.603,-1.64,-1.677,-1.713,-1.748,-1.783,-1.817,-1.851,-1.885,-1.918,-1.95,-1.982,-2.014,-2.045,-2.076,-2.106,-2.136,-2.165,-2.193,-2.221,-2.249,-2.276,-2.303,-2.329,-2.355,-2.38,-2.404,-2.429,-2.452,-2.475,-2.498,-2.52,-2.542,-2.563,-2.583,-2.603,-2.623,-2.642,-2.66,-2.679,-2.696,-2.713,-2.729,-2.745,-2.761,-2.776,-2.79,-2.804,-2.817,-2.83,-2.843,-2.854,-2.866,-2.877,-2.887,-2.897,-2.906,-2.915,-2.923,-2.93,-2.938,-2.944,-2.95,-2.956,-2.961,-2.966,-2.97,-2.973,-2.976,-2.979,-2.981,-2.983,-2.984,-2.984,-2.984,-2.984,-2.983,-2.981,-2.979,-2.976,-2.973,-2.97,-2.966,-2.961,-2.956,-2.951,-2.945,-2.938,-2.931,-2.924,-2.916,-2.907,-2.898,-2.889,-2.879,-2.868,-2.857,-2.846,-2.834,-2.822,-2.809,-2.796,-2.782,-2.767,-2.753,-2.738,-2.722,-2.706,-2.689,-2.672,-2.655,-2.637,-2.618,-2.599,-2.58,-2.56,-2.54,-2.519,-2.498,-2.477,-2.455,-2.432,-2.409,-2.386,-2.362,-2.338,-2.314,-2.289,-2.263,-2.237,-2.211,-2.184,-2.157,-2.13,-2.102,-2.074,-2.045,-2.016,-1.986,-1.956,-1.926,-1.895,-1.864,-1.833,-1.801,-1.769,-1.736,-1.703,-1.67,-1.636,-1.602,-1.568,-1.533,-1.498,-1.463,-1.427,-1.391,-1.354,-1.317,-1.28,-1.242,-1.205,-1.166,-1.128,-1.089,-1.05,-1.01,-0.971,-0.93,-0.89,-0.849,-0.808,-0.767,-0.725,-0.683,-0.641,-0.599,-0.556,-0.513,-0.469,-0.426,-0.382,-0.338,-0.293,-0.249,-0.204,-0.158,-0.113,-0.067,-0.021,0.025,0.072,0.118,0.165,0.212,0.26,0.307,0.355,0.403,0.452,0.5,0.549,0.598,0.647,0.696,0.746,0.796,0.845,0.896,0.946,0.996,1.047,1.098,1.149,1.2,1.251,1.303,1.354,1.406,1.458,1.51,1.563,1.615,1.668,1.72,1.773,1.826,1.879,1.932,1.986,2.039,2.093,2.146,2.2,2.254,2.308,2.362],"earthAz":[321.6,321.5,321.5,321.4,321.4,321.3,321.2,321.2,321.1,321.1,321.0,320.9,320.9,320.8,320.8,320.7,320.6,320.6,320.5,320.5,320.4,320.3,320.3,320.2,320.2,320.1,320.0,320.0,319.9,319.9,319.8,319.7,319.7,319.6,319.6,319.5,319.4,319.4,319.3,319.3,319.2,319.1,319.1,319.0,319.0,318.9,318.9,318.8,318.7,318.7,318.6,318.6,318.5,318.5,318.4,318.3,318.3,318.2,318.2,318.1,318.1,318.0,318.0,317.9,317.8,317.8,317.7,317.7,317.6,317.6,317.5,317.5,317.4,317.4,317.3,317.3,317.2,317.2,317.1,317.1,317.0,317.0,316.9,316.9,316.9,316.8,316.8,316.7,316.7,316.6,316.6,316.5,316.5,316.5,316.4,316.4,316.3,316.3,316.3,316.2,316.2,316.1,316.1,316.1,316.0,316.0,316.0,315.9,315.9,315.9,315.8,315.8,315.8,315.7,315.7,315.7,315.7,315.6,315.6,315.6,315.6,315.5,315.5,315.5,315.5,315.4,315.4,315.4,315.4,315.4,315.3,315.3,315.3,315.3,315.3,315.3,315.2,315.2,315.2,315.2,315.2,315.2,315.2,315.2,315.2,315.2,315.2,315.2,315.2,315.2,315.2,315.2,315.2,315.2,315.2,315.2,315.2,315.2,315.2,315.2,315.2,315.2,315.2,315.2,315.2,315.2,315.3,315.3,315.3,315.3,315.3,315.3,315.4,315.4,315.4,315.4,315.4,315.5,315.5,315.5,315.5,315.6,315.6,315.6,315.6,315.7,315.7,315.7,315.8,315.8,315.8,315.9,315.9,316.0,316.0,316.0,316.1,316.1,316.2,316.2,316.2,316.3,316.3,316.4,316.4,316.5,316.5,316.6,316.6,316.7,316.7,316.8,316.8,316.9,316.9,317.0,317.1,317.1,317.2,317.2,317.3,317.4,317.4,317.5,317.5,317.6,317.7,317.7,317.8,317.9,317.9,318.0,318.1,318.1,318.2,318.3,318.4,318.4,318.5,318.6,318.7,318.7,318.8,318.9,319.0,319.0,319.1,319.2,319.3,319.3,319.4,319.5,319.6,319.7,319.7,319.8,319.9,320.0,320.1,320.1,320.2,320.3,320.4,320.5,320.5,320.6,320.7,320.8,320.9,321.0,321.0,321.1,321.2,321.3,321.4,321.5,321.6,321.6,321.7,321.8,321.9,322.0,322.1,322.1,322.2,322.3,322.4,322.5,322.6,322.7,322.7,322.8,322.9,323.0,323.1,323.2,323.2,323.3,323.4,323.5,323.6,323.6,323.7,323.8,323.9,324.0,324.1,324.1,324.2,324.3,324.4,324.4,324.5,324.6,324.7,324.8,324.8,324.9,325.0,325.1,325.1,325.2,325.3,325.4,325.4,325.5,325.6,325.6,325.7,325.8,325.9,325.9,326.0,326.1,326.1,326.2,326.3,326.3,326.4,326.5,326.5,326.6,326.7,326.7,326.8,326.8,326.9,327.0,327.0,327.1,327.1,327.2,327.2,327.3,327.4,327.4,327.5,327.5,327.6,327.6,327.7,327.7,327.8,327.8,327.9,327.9,328.0,328.0,328.1,328.1,328.1,328.2,328.2,328.3,328.3,328.4,328.4,328.4,328.5,328.5,328.6,328.6,328.6,328.7,328.7,328.7,328.8,328.8,328.8,328.9,328.9,328.9,329.0,329.0,329.0,329.0,329.1,329.1,329.1,329.1,329.2,329.2,329.2,329.2,329.3,329.3,329.3,329.3,329.3,329.4,329.4,329.4,329.4,329.4,329.4,329.5,329.5,329.5,329.5,329.5,329.5,329.5,329.6,329.6,329.6,329.6,329.6,329.6,329.6,329.6,329.6,329.6,329.6,329.6,329.6,329.6,329.6,329.7,329.7,329.7,329.7,329.7,329.7,329.7,329.7,329.7,329.7,329.7,329.6,329.6,329.6,329.6,329.6,329.6,329.6,329.6,329.6,329.6,329.6,329.6,329.6,329.6,329.6,329.6,329.5,329.5,329.5,329.5,329.5,329.5,329.5,329.5,329.4,329.4,329.4,329.4,329.4,329.4,329.4,329.3,329.3,329.3,329.3,329.3,329.3,329.2,329.2,329.2,329.2,329.2,329.1,329.1,329.1,329.1,329.1,329.0,329.0,329.0,329.0,328.9,328.9,328.9,328.9,328.9,328.8,328.8,328.8,328.8,328.7,328.7,328.7,328.6,328.6,328.6,328.6,328.5,328.5,328.5,328.4,328.4,328.4,328.4,328.3,328.3,328.3,328.2,328.2,328.2,328.1,328.1,328.1,328.0,328.0,328.0,327.9,327.9,327.9,327.8,327.8,327.8,327.7,327.7,327.7,327.6,327.6,327.6,327.5,327.5,327.4,327.4,327.4,327.3,327.3,327.3,327.2,327.2,327.1,327.1,327.1,327.0,327.0,326.9,326.9,326.9,326.8,326.8,326.7,326.7,326.6,326.6,326.6,326.5,326.5,326.4,326.4,326.3,326.3,326.3,326.2,326.2,326.1,326.1,326.0,326.0,325.9,325.9,325.8,325.8,325.7,325.7,325.7,325.6,325.6,325.5,325.5,325.4,325.4,325.3,325.3,325.2,325.2,325.1,325.1,325.0,325.0,324.9,324.9,324.8,324.8,324.7,324.7,324.6,324.6,324.5,324.4,324.4,324.3,324.3,324.2,324.2,324.1,324.1,324.0,324.0,323.9,323.9,323.8,323.7,323.7,323.6,323.6,323.5,323.5,323.4,323.4,323.3,323.2,323.2,323.1,323.1,323.0,323.0,322.9,322.8,322.8,322.7,322.7,322.6,322.5,322.5,322.4,322.4,322.3,322.3,322.2,322.1,322.1,322.0,322.0,321.9,321.8,321.8,321.7,321.7,321.6,321.5,321.5,321.4,321.4,321.3,321.2,321.2,321.1,321.1,321.0,320.9,320.9,320.8,320.7,320.7,320.6,320.6,320.5,320.4,320.4,320.3,320.3,320.2,320.1,320.1,320.0,320.0,319.9,319.8,319.8,319.7,319.6,319.6,319.5,319.5,319.4,319.3,319.3,319.2,319.2,319.1,319.0,319.0,318.9,318.9,318.8,318.7,318.7,318.6,318.6,318.5,318.4,318.4,318.3,318.3,318.2],"earthHz":[16.832,16.825,16.817,16.81,16.803,16.796,16.789,16.781,16.774,16.767,16.76,16.757,16.754,16.752,16.749,16.746,16.744,16.741,16.739,16.736,16.733,16.731,16.728,16.726,16.723,16.72,16.718,16.715,16.711,16.708,16.704,16.701,16.697,16.694,16.69,16.687,16.684,16.68,16.677,16.673,16.67,16.666,16.663,16.659,16.656,16.654,16.651,16.649,16.646,16.644,16.641,16.639,16.636,16.633,16.631,16.628,16.626,16.624,16.621,16.619,16.616,16.614,16.613,16.613,16.613,16.613,16.613,16.613,16.613,16.613,16.613,16.612,16.612,16.612,16.612,16.612,16.612,16.612,16.612,16.612,16.612,16.612,16.611,16.611,16.611,16.61,16.61,16.61,16.609,16.609,16.609,16.609,16.608,16.608,16.608,16.607,16.607,16.607,16.607,16.606,16.606,16.606,16.606,16.605,16.605,16.605,16.604,16.603,16.602,16.6,16.599,16.598,16.597,16.596,16.595,16.594,16.594,16.593,16.592,16.591,16.59,16.589,16.588,16.588,16.587,16.586,16.586,16.585,16.584,16.584,16.583,16.583,16.582,16.581,16.581,16.581,16.58,16.58,16.579,16.579,16.579,16.578,16.578,16.578,16.578,16.577,16.577,16.577,16.577,16.577,16.577,16.577,16.577,16.577,16.577,16.577,16.577,16.577,16.578,16.578,16.578,16.578,16.579,16.579,16.579,16.58,16.58,16.581,16.581,16.582,16.582,16.583,16.583,16.584,16.585,16.585,16.586,16.587,16.588,16.589,16.589,16.59,16.591,16.592,16.593,16.594,16.595,16.596,16.597,16.599,16.6,16.601,16.602,16.603,16.605,16.605,16.605,16.606,16.606,16.606,16.607,16.607,16.607,16.607,16.608,16.608,16.608,16.609,16.609,16.609,16.61,16.61,16.611,16.611,16.611,16.612,16.612,16.612,16.612,16.612,16.612,16.612,16.612,16.612,16.613,16.613,16.613,16.613,16.613,16.613,16.613,16.614,16.617,16.62,16.623,16.626,16.629,16.633,16.636,16.639,16.642,16.646,16.649,16.652,16.656,16.659,16.664,16.668,16.673,16.677,16.682,16.687,16.691,16.696,16.7,16.705,16.71,16.715,16.718,16.722,16.725,16.729,16.733,16.736,16.74,16.743,16.747,16.75,16.754,16.758,16.765,16.775,16.785,16.795,16.805,16.816,16.826,16.836,16.846,16.856,16.866,16.877,16.888,16.899,16.911,16.922,16.934,16.945,16.957,16.968,16.98,16.991,17.003,17.014,17.025,17.036,17.046,17.057,17.068,17.078,17.089,17.099,17.11,17.12,17.131,17.141,17.149,17.157,17.164,17.171,17.178,17.186,17.193,17.2,17.207,17.214,17.221,17.228,17.235,17.242,17.248,17.254,17.261,17.267,17.273,17.28,17.286,17.292,17.298,17.304,17.31,17.316,17.322,17.328,17.333,17.339,17.344,17.349,17.354,17.36,17.365,17.37,17.375,17.38,17.385,17.39,17.395,17.4,17.405,17.411,17.418,17.424,17.43,17.436,17.442,17.448,17.454,17.46,17.465,17.471,17.476,17.482,17.487,17.493,17.498,17.503,17.508,17.513,17.518,17.523,17.528,17.533,17.538,17.542,17.547,17.552,17.556,17.56,17.565,17.569,17.573,17.577,17.581,17.585,17.589,17.593,17.596,17.6,17.604,17.607,17.611,17.614,17.617,17.62,17.623,17.626,17.629,17.632,17.635,17.637,17.64,17.642,17.645,17.647,17.649,17.651,17.654,17.656,17.658,17.66,17.662,17.663,17.665,17.667,17.669,17.67,17.672,17.673,17.675,17.676,17.677,17.678,17.68,17.681,17.682,17.683,17.684,17.684,17.685,17.686,17.687,17.687,17.688,17.688,17.689,17.689,17.69,17.69,17.69,17.69,17.69,17.691,17.691,17.691,17.69,17.69,17.69,17.69,17.69,17.689,17.689,17.688,17.688,17.687,17.687,17.686,17.686,17.685,17.684,17.683,17.682,17.682,17.681,17.68,17.679,17.677,17.676,17.675,17.674,17.673,17.671,17.67,17.669,17.667,17.666,17.664,17.663,17.661,17.659,17.658,17.656,17.654,17.653,17.651,17.649,17.647,17.645,17.643,17.641,17.639,17.637,17.635,17.633,17.63,17.628,17.626,17.623,17.621,17.619,17.616,17.613,17.611,17.608,17.606,17.603,17.6,17.597,17.594,17.592,17.589,17.586,17.583,17.58,17.577,17.574,17.571,17.568,17.564,17.561,17.558,17.555,17.551,17.548,17.545,17.541,17.538,17.534,17.531,17.527,17.524,17.52,17.517,17.513,17.509,17.506,17.502,17.498,17.495,17.491,17.487,17.483,17.479,17.476,17.472,17.468,17.464,17.46,17.456,17.452,17.448,17.444,17.439,17.435,17.431,17.427,17.423,17.418,17.414,17.41,17.405,17.402,17.398,17.395,17.392,17.388,17.385,17.382,17.378,17.375,17.371,17.368,17.364,17.361,17.357,17.354,17.35,17.347,17.343,17.339,17.336,17.332,17.328,17.325,17.321,17.317,17.313,17.309,17.305,17.301,17.297,17.293,17.289,17.284,17.28,17.276,17.272,17.268,17.263,17.259,17.255,17.251,17.246,17.242,17.238,17.233,17.228,17.224,17.219,17.214,17.21,17.205,17.2,17.195,17.19,17.186,17.181,17.176,17.171,17.166,17.161,17.156,17.151,17.146,17.14,17.133,17.126,17.119,17.112,17.105,17.098,17.09,17.083,17.076,17.069,17.062,17.054,17.047,17.04,17.032,17.025,17.018,17.01,17.002,16.994,16.986,16.978,16.97,16.962,16.954,16.946,16.938,16.93,16.922,16.914,16.906,16.898,16.89,16.882,16.874,16.867,16.86,16.853,16.845,16.838,16.831,16.824,16.816,16.809,16.802,16.795,16.787,16.78,16.773,16.765,16.759,16.756,16.754,16.751,16.748,16.746,16.743,16.74,16.738,16.735,16.733,16.73,16.727,16.725,16.722,16.719,16.717,16.713,16.71,16.706,16.703,16.699,16.696,16.692,16.688,16.685,16.681,16.678,16.674,16.671,16.667,16.664,16.66,16.657,16.654,16.652,16.649,16.646,16.644,16.641,16.638,16.636,16.633,16.631,16.628,16.625,16.623],"f":{"sun":"1111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111110000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111","earth":"0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000","both":"0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"}}},"methods":[{"site":"MM-01","region":"Mons Mouton sample","method":"nearest","n":721,"sunOpen":397,"earthOpen":721,"bothOpen":397,"sun":55.06,"earth":100.0,"both":55.06},{"site":"MM-01","region":"Mons Mouton sample","method":"bilinear","n":721,"sunOpen":388,"earthOpen":690,"bothOpen":388,"sun":53.81,"earth":95.7,"both":53.81},{"site":"MMP-02","region":"Mons Mouton Plateau sample","method":"nearest","n":721,"sunOpen":141,"earthOpen":342,"bothOpen":139,"sun":19.56,"earth":47.43,"both":19.28},{"site":"MMP-02","region":"Mons Mouton Plateau sample","method":"bilinear","n":721,"sunOpen":193,"earthOpen":436,"bothOpen":193,"sun":26.77,"earth":60.47,"both":26.77},{"site":"NR-03","region":"Nobile Rim 1 vicinity sample","method":"nearest","n":721,"sunOpen":184,"earthOpen":0,"bothOpen":0,"sun":25.52,"earth":0.0,"both":0.0},{"site":"NR-03","region":"Nobile Rim 1 vicinity sample","method":"bilinear","n":721,"sunOpen":216,"earthOpen":0,"bothOpen":0,"sun":29.96,"earth":0.0,"both":0.0}]};
+window.SHEAR_DATA=D;
+const SITES=Object.keys(D.sites),N=D.n;
+const REDUCED=window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+const MON=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+const T0=Date.UTC(2026,10,14);
+const COL={sun:"#ffb84d",earth:"#5aaeff",both:"#4fe0b0"};
+const $=s=>document.querySelector(s);
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const lerp=(a,b,t)=>a+(b-a)*t;
+const ss=(a,b,x)=>{const t=clamp((x-a)/(b-a),0,1);return t*t*(3-2*t)};
+const pad=n=>String(n).padStart(2,"0");
+const DPR=Math.min(window.devicePixelRatio||1,(window.innerWidth<700?1.5:2));
+const fmtDate=i=>{const d=new Date(T0+Math.round(i)*36e5);return MON[d.getUTCMonth()]+" "+d.getUTCDate()+" · "+pad(d.getUTCHours())+":00"};
+const isOpen=(s,b,i)=>D.sites[s].f[b].charCodeAt(clamp(Math.round(i),0,N-1))===49;
+const M=(s,m)=>D.methods.find(r=>r.site===s&&r.method===m);
+const mkRng=seed=>{let a=seed>>>0;return()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}};
+function runs(str,val){const r=[];let a=-1;for(let i=0;i<=str.length;i++){const v=i<str.length&&((str[i]==="1")===val);if(v&&a<0)a=i;if(!v&&a>=0){r.push([a,i-1]);a=-1}}return r}
+const STAT={};
+function stat(s,b){const k=s+b;if(STAT[k])return STAT[k];const str=D.sites[s].f[b],o=runs(str,true),c=runs(str,false);const L=r=>r.reduce((m,x)=>Math.max(m,x[1]-x[0]+1),0);return STAT[k]={open:o.reduce((n,x)=>n+x[1]-x[0]+1,0),wins:o.length,longest:L(o),gap:L(c),runs:o}}
+
+/* ---------- integrity ---------- */
+(function(){let ok=SITES.length===3;SITES.forEach(s=>{const m=M(s,"bilinear");ok=ok&&D.sites[s].f.sun.length===N&&stat(s,"sun").open===m.sunOpen&&stat(s,"earth").open===m.earthOpen&&stat(s,"both").open===m.bothOpen});
+  const c=$("#chk");c.className="chk"+(ok?"":" no");c.textContent=ok?"data check passed · 3 × 721":"data check failed"})();
+(function(){
+  const mx=SITES.map(s=>Math.max.apply(null,D.sites[s].sunEl));
+  $("#b2t").textContent="At our three sample sites the Sun peaks between "+Math.min.apply(null,mx).toFixed(1)+"° and "+Math.max.apply(null,mx).toFixed(1)+"° above the horizon. Any ridge can hide it.";
+  let mxd=0,who="";SITES.forEach(s=>["sun","earth","both"].forEach(k=>{const d=Math.abs(M(s,"bilinear")[k]-M(s,"nearest")[k]);if(d>mxd){mxd=d;who=s+" "+k}}));
+  $("#sensLi").textContent="Bilinear and nearest-pixel terrain sampling give different answers, by up to "+mxd.toFixed(1)+" percentage points ("+who+"). Treat every percentage as approximate.";
+})();
+
+/* ---------- canvases ---------- */
+function fit(cv){const r=cv.getBoundingClientRect(),w=Math.max(1,Math.round(r.width)),h=Math.max(1,Math.round(r.height));if(cv.width!==Math.round(w*DPR)||cv.height!==Math.round(h*DPR)){cv.width=Math.round(w*DPR);cv.height=Math.round(h*DPR)}const c=cv.getContext("2d");c.setTransform(DPR,0,0,DPR,0,0);return{c:c,w:w,h:h}}
+const rs=mkRng(11);
+const STARS=[];for(let i=0;i<340;i++)STARS.push({x:rs(),y:rs(),r:rs()*1.25+.2,a:rs()*.7+.25,tw:rs()*6.28,sp:rs()*1.4+.4});
+let shoot=null,nextShoot=3;
+
+function drawStarsBG(t,scrollY){
+  const {c,w,h}=fit($("#stars"));c.clearRect(0,0,w,h);
+  const off=scrollY*.03;
+  for(const s of STARS){const y=((s.y*h-off*(s.r+.3))%h+h)%h;const a=s.a*(REDUCED?1:.7+.3*Math.sin(t*s.sp+s.tw));c.globalAlpha=a;c.fillStyle="#dfe8ff";c.fillRect(s.x*w,y,s.r,s.r)}
+  c.globalAlpha=1;
+  if(!REDUCED){
+    if(!shoot&&t>nextShoot){shoot={x:Math.random()*w*.8+w*.1,y:Math.random()*h*.35,t:t};nextShoot=t+7+Math.random()*9}
+    if(shoot){const k=(t-shoot.t)/.9;if(k>=1)shoot=null;else{const x=shoot.x+k*260,y=shoot.y+k*120;const g=c.createLinearGradient(x,y,x-90,y-42);g.addColorStop(0,"rgba(255,255,255,"+(1-k)+")");g.addColorStop(1,"rgba(255,255,255,0)");c.strokeStyle=g;c.lineWidth=1.5;c.beginPath();c.moveTo(x,y);c.lineTo(x-90,y-42);c.stroke()}}
+  }
+}
+
+/* ---------- Moon descent ---------- */
+const MR=1000,CR=[],rc=mkRng(7);
+for(let i=0;i<9000;i++){const u=rc(),d=MR*.95*Math.pow(u,1.5),y=MR-d,half=Math.sqrt(Math.max(0,MR*MR-y*y))*.94,x=(rc()*2-1)*half,k=Math.pow(rc(),4.2),rad=MR*(.0004+.013*k);CR.push([x,y,rad,rc()])}
+const BL=[];for(let i=0;i<90;i++){const u=rc(),d=MR*.9*Math.pow(u,1.3),y=MR-d,half=Math.sqrt(Math.max(0,MR*MR-y*y))*.9;BL.push([(rc()*2-1)*half,y,MR*(.04+.2*rc()),rc()<.5?1:0,.04+rc()*.07])}
+CR.sort((a,b)=>b[2]-a[2]);
+function drawMoon(p){
+  const {c,w,h}=fit($("#cv1"));
+  c.fillStyle="#03050a";c.fillRect(0,0,w,h);
+  const sFar=(Math.min(w,h)*.36)/MR, sNear=(h*12)/MR;
+  const s=sFar*Math.exp(Math.pow(p,1.12)*Math.log(sNear/sFar));
+  const px=w/2, py=lerp(h*.47+MR*sFar,h*.78,ss(0,1,p));
+  const cx=px, cy=py-MR*s, R=MR*s;
+  // stars fade
+  c.globalAlpha=1-ss(.05,.35,p);
+  for(const q of STARS){c.fillStyle="#dfe8ff";c.fillRect(q.x*w,q.y*h*.8,q.r,q.r)}
+  c.globalAlpha=1;
+  // limb glow
+  const ga=(1-ss(0,.3,p))*.5;
+  if(ga>.01){const g=c.createRadialGradient(cx,cy,R*.97,cx,cy,R*1.08);g.addColorStop(0,"rgba(150,180,235,"+ga+")");g.addColorStop(1,"rgba(150,180,235,0)");c.fillStyle=g;c.beginPath();c.arc(cx,cy,R*1.08,0,6.2832);c.fill()}
+  // sphere
+  const g=c.createRadialGradient(cx+R*.38,cy-R*.34,R*.04,cx+R*.1,cy-R*.1,R*1.12);
+  g.addColorStop(0,"#e0e3e9");g.addColorStop(.42,"#a6aab6");g.addColorStop(.8,"#666b79");g.addColorStop(1,"#3a3f4c");
+  c.fillStyle=g;c.beginPath();c.arc(cx,cy,R,0,6.2832);c.fill();
+  // soft mottling
+  for(let i=0;i<BL.length;i++){const q=BL[i],sx=px+q[0]*s,sy=py+(q[1]-MR)*s,r=q[2]*s;if(sx<-r||sx>w+r||sy<-r||sy>h+r)continue;const gg=c.createRadialGradient(sx,sy,0,sx,sy,r);const col=q[3]?"230,234,244":"10,12,18";gg.addColorStop(0,"rgba("+col+","+q[4]+")");gg.addColorStop(1,"rgba("+col+",0)");c.fillStyle=gg;c.fillRect(sx-r,sy-r,r*2,r*2)}
+  // craters
+  for(let i=0;i<CR.length;i++){
+    const q=CR[i],sx=px+q[0]*s,sy=py+(q[1]-MR)*s,r=q[2]*s;
+    if(r<.7||r>h*.22||sx<-r||sx>w+r||sy<-r||sy>h+r)continue;
+    c.fillStyle="rgba(8,10,16,"+(.10+q[3]*.08)+")";c.beginPath();c.arc(sx,sy,r,0,6.2832);c.fill();
+    if(r>2.5){c.strokeStyle="rgba(228,233,244,"+(.10+q[3]*.12)+")";c.lineWidth=Math.max(.6,r*.07);c.beginPath();c.arc(sx,sy,r*.96,-1.2,.6);c.stroke();
+      c.strokeStyle="rgba(0,0,0,"+(.16+q[3]*.12)+")";c.lineWidth=Math.max(.6,r*.1);c.beginPath();c.arc(sx,sy,r*.9,1.9,4.1);c.stroke()}
+  }
+  // twilight toward the end
+  const dk=c.createLinearGradient(0,0,0,h);dk.addColorStop(0,"rgba(3,5,10,"+(.15+.35*ss(.5,1,p))+")");dk.addColorStop(1,"rgba(3,5,10,"+(.1+.15*ss(.5,1,p))+")");
+  c.fillStyle=dk;c.fillRect(0,0,w,h);
+  const fadeOut=ss(.93,1,p);if(fadeOut>0){c.fillStyle="rgba(3,5,10,"+fadeOut+")";c.fillRect(0,0,w,h)}
+}
+const beats=[["#b1",.03,.13,.30,.36],["#b2",.38,.46,.60,.66],["#b3",.68,.76,.90,.95]];
+const pinPos=[[.34,.30],[.50,.22],[.67,.33]];
+function updateBeats(p,w,h){
+  beats.forEach(b=>{const el=$(b[0]),a=ss(b[1],b[2],p)*(1-ss(b[3],b[4],p));el.style.opacity=a;el.style.transform="translateY("+((1-a)*26)+"px)"});
+  const pa=ss(.74,.84,p)*(1-ss(.92,.97,p));
+  pinPos.forEach((q,i)=>{const el=$("#p"+i);el.style.left=(q[0]*100)+"%";el.style.top=(q[1]*100)+"%";el.style.opacity=pa});
+  $("#schem").style.opacity=pa*.9;
+}
+
+/* ---------- horizon ---------- */
+const SKY={};
+function skyline(s){
+  if(SKY[s])return SKY[s];
+  const st=D.sites[s],sum=new Array(360).fill(0),cnt=new Array(360).fill(0);
+  ["sun","earth"].forEach(b=>{for(let i=0;i<N;i++){const k=Math.floor(st[b+"Az"][i])%360;sum[k]+=st[b+"Hz"][i];cnt[k]++}});
+  const base=sum.map((v,k)=>cnt[k]?v/cnt[k]:null),H=new Array(360);
+  for(let k=0;k<360;k++){
+    if(base[k]!==null){H[k]=base[k];continue}
+    let a=k,da=0;while(base[(a%360+360)%360]===null&&da<360){a--;da++}
+    let b=k,db=0;while(base[b%360]===null&&db<360){b++;db++}
+    const va=base[(a%360+360)%360],vb=base[b%360];H[k]=(va===null||vb===null)?0:va+(vb-va)*(da/(da+db));
+  }
+  for(let pass=0;pass<2;pass++){const T=H.slice();for(let k=0;k<360;k++)H[k]=(T[(k+359)%360]+T[k]*2+T[(k+1)%360])/4}
+  return SKY[s]=H;
+}
+const hzAt=(H,az)=>{const a=((az%360)+360)%360,k=Math.floor(a),f=a-k;return H[k%360]*(1-f)+H[(k+1)%360]*f};
+function interp(arr,t){const i=Math.floor(t),f=t-i,a=arr[clamp(i,0,N-1)],b=arr[clamp(i+1,0,N-1)];return a+(b-a)*f}
+function interpAz(arr,t){const i=Math.floor(t),f=t-i;let a=arr[clamp(i,0,N-1)],b=arr[clamp(i+1,0,N-1)];if(b-a>180)b-=360;else if(a-b>180)b+=360;return((a+(b-a)*f)%360+360)%360}
+const V={site:SITES[0],t:0};
+const rv=mkRng(3),HS=[];for(let i=0;i<300;i++)HS.push({x:rv(),y:rv(),r:rv()*1.2+.2,a:rv()*.6+.2,tw:rv()*6.28});
+
+function drawEarth(c,x,y,r,a){
+  if(a<=0)return;c.save();c.globalAlpha=a;
+  c.globalCompositeOperation="lighter";
+  let g=c.createRadialGradient(x,y,r*.8,x,y,r*3.2);g.addColorStop(0,"rgba(90,174,255,.45)");g.addColorStop(1,"rgba(90,174,255,0)");c.fillStyle=g;c.beginPath();c.arc(x,y,r*3.2,0,6.2832);c.fill();
+  c.globalCompositeOperation="source-over";
+  g=c.createRadialGradient(x-r*.35,y-r*.35,r*.1,x,y,r);g.addColorStop(0,"#d8ecff");g.addColorStop(.35,"#6fb4ff");g.addColorStop(.75,"#1e5fb8");g.addColorStop(1,"#08265a");
+  c.fillStyle=g;c.beginPath();c.arc(x,y,r,0,6.2832);c.fill();
+  c.save();c.beginPath();c.arc(x,y,r,0,6.2832);c.clip();
+  c.strokeStyle="rgba(255,255,255,.55)";c.lineWidth=Math.max(1,r*.13);c.lineCap="round";
+  c.beginPath();c.arc(x-r*.2,y+r*.15,r*.7,3.6,4.9);c.stroke();
+  c.beginPath();c.arc(x+r*.25,y-r*.2,r*.55,.6,1.8);c.stroke();
+  c.beginPath();c.arc(x,y-r*.6,r*.5,2.4,3.4);c.stroke();
+  c.fillStyle="rgba(120,200,120,.35)";c.beginPath();c.ellipse(x-r*.35,y+r*.05,r*.22,r*.34,.5,0,6.2832);c.fill();
+  const sh=c.createLinearGradient(x-r,y,x+r,y);sh.addColorStop(0,"rgba(0,0,0,.0)");sh.addColorStop(.6,"rgba(0,0,0,.05)");sh.addColorStop(1,"rgba(0,0,10,.55)");c.fillStyle=sh;c.fillRect(x-r,y-r,r*2,r*2);
+  c.restore();c.restore();
+}
+function drawSun(c,x,y,sc,a){
+  if(a<=0)return;c.save();c.globalCompositeOperation="lighter";
+  let g=c.createRadialGradient(x,y,0,x,y,sc*2.4);g.addColorStop(0,"rgba(255,244,214,"+(.9*a)+")");g.addColorStop(.12,"rgba(255,196,110,"+(.55*a)+")");g.addColorStop(.45,"rgba(255,140,50,"+(.14*a)+")");g.addColorStop(1,"rgba(255,120,40,0)");
+  c.fillStyle=g;c.beginPath();c.arc(x,y,sc*2.4,0,6.2832);c.fill();
+  c.save();c.translate(x,y);c.scale(1,.035);g=c.createRadialGradient(0,0,0,0,0,sc*4.2);g.addColorStop(0,"rgba(255,225,170,"+(.6*a)+")");g.addColorStop(1,"rgba(255,170,80,0)");c.fillStyle=g;c.beginPath();c.arc(0,0,sc*4.2,0,6.2832);c.fill();c.restore();
+  c.fillStyle="rgba(255,252,240,"+a+")";c.beginPath();c.arc(x,y,Math.max(3.5,sc*.07),0,6.2832);c.fill();
+  c.restore();
+}
+function ridgePath(c,w,fn){c.beginPath();c.moveTo(-2,fn(0));const n=240;for(let i=1;i<=n;i++){const az=i/n*360,x=az/360*w,y=fn(az);const xp=(i-.5)/n*w,yp=fn((i-.5)/n*360);c.quadraticCurveTo(xp,yp,x,y)}}
+const FM='"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace';
+function drawHorizon(time){
+  
+  const {c,w,h}=fit($("#cv2")),s=V.site,st=D.sites[s],t=clamp(V.t,0,N-1);
+  const yH=h*.64,ppd=h*.034,Y=el=>yH-el*ppd,X=az=>az/360*w;
+  const H=skyline(s);
+  let g=c.createLinearGradient(0,0,0,yH+h*.05);g.addColorStop(0,"#01030a");g.addColorStop(.7,"#050a18");g.addColorStop(1,"#0b1630");c.fillStyle=g;c.fillRect(0,0,w,h);
+  for(const q of HS){const yy=q.y*yH;c.globalAlpha=q.a*(REDUCED?1:.75+.25*Math.sin(time*1.3+q.tw));c.fillStyle="#dfe8ff";c.fillRect(q.x*w,yy,q.r,q.r)}c.globalAlpha=1;
+  // 0 degree line + scale
+  c.strokeStyle="rgba(170,190,220,.12)";c.lineWidth=1;c.setLineDash([2,6]);
+  [0,5,10,15].forEach(d=>{c.beginPath();c.moveTo(0,Y(d));c.lineTo(w,Y(d));c.stroke()});c.setLineDash([]);
+  c.fillStyle="rgba(170,190,220,.4)";c.font="400 10px "+FM;
+  [0,5,10,15].forEach(d=>c.fillText(d+"°",8,Y(d)-5));
+  [[0,"N"],[90,"E"],[180,"S"],[270,"W"]].forEach(a=>{c.fillText(a[1]+" "+a[0]+"°",X(a[0])+6,yH+h*.33)});
+  // tracks and trails
+  const body={};
+  ["sun","earth"].forEach(b=>{
+    const az=interpAz(st[b+"Az"],t),el=interp(st[b+"El"],t),hz=interp(st[b+"Hz"],t);
+    body[b]={az:az,el:el,hz:hz,cl:el-hz};
+    c.fillStyle=COL[b];
+    for(let i=0;i<N;i+=3){c.globalAlpha=.1;c.fillRect(X(st[b+"Az"][i]),Y(st[b+"El"][i]),1.6,1.6)}
+    for(let k=60;k>0;k-=2){const i=t-k;if(i<0)continue;c.globalAlpha=(1-k/60)*.5;c.fillRect(X(interpAz(st[b+"Az"],i)),Y(interp(st[b+"El"],i)),2.4,2.4)}
+    c.globalAlpha=1;
+  });
+  const sc=Math.min(w,h)*.11;
+  const vis=b=>ss(-.9,.35,body[b].cl);
+  drawEarth(c,X(body.earth.az),Y(body.earth.el),Math.max(9,ppd*.95),clamp(.15+vis("earth")*.85,0,1)*1);
+  drawSun(c,X(body.sun.az),Y(body.sun.el),sc,.12+vis("sun")*.88);
+  // wrap duplicates near edges
+  [[body.sun,"sun"],[body.earth,"earth"]].forEach(a=>{const x=X(a[0].az);if(x<sc*2.4){if(a[1]==="sun")drawSun(c,x+w,Y(a[0].el),sc,.12+vis("sun")*.88);else drawEarth(c,x+w,Y(a[0].el),Math.max(9,ppd*.95),clamp(.15+vis("earth")*.85,0,1))}if(x>w-sc*2.4){if(a[1]==="sun")drawSun(c,x-w,Y(a[0].el),sc,.12+vis("sun")*.88);else drawEarth(c,x-w,Y(a[0].el),Math.max(9,ppd*.95),clamp(.15+vis("earth")*.85,0,1))}});
+  // ridge
+  const ridge=az=>Y(hzAt(H,az));
+  ridgePath(c,w,ridge);c.lineTo(w+2,h+2);c.lineTo(-2,h+2);c.closePath();
+  g=c.createLinearGradient(0,yH-h*.12,0,h);g.addColorStop(0,"#161b26");g.addColorStop(.25,"#0b0f17");g.addColorStop(1,"#020306");c.fillStyle=g;c.fill();
+  // rim light
+  c.save();ridgePath(c,w,ridge);c.lineWidth=2.4;
+  [[body.sun,"255,190,100",1],[body.earth,"110,180,255",.55]].forEach(a=>{
+    const k=ss(-.9,.4,a[0].cl)*a[2],x=X(a[0].az);if(k<=.01)return;
+    [-w,0,w].forEach(dx=>{const rg=c.createRadialGradient(x+dx,yH,0,x+dx,yH,w*.16);rg.addColorStop(0,"rgba("+a[1]+","+(.95*k)+")");rg.addColorStop(1,"rgba("+a[1]+",0)");c.strokeStyle=rg;c.stroke()});
+  });
+  c.restore();
+  // illustrative foreground ridges
+  const cols=["#0a0e15","#06090f","#030509"];
+  for(let j=1;j<=3;j++){
+    const fn=az=>Y(hzAt(H,az)-1.1*j*(.7+.3*Math.sin(az*.11+j*2.1))-.9*j-.5*Math.sin(az*.37+j));
+    ridgePath(c,w,fn);c.lineTo(w+2,h+2);c.lineTo(-2,h+2);c.closePath();c.fillStyle=cols[j-1];c.fill();
+  }
+  // clearance gauges
+  ["sun","earth"].forEach(b=>{
+    const o=body[b],x=X(o.az),y1=Y(o.el),y2=Y(o.hz),op=o.cl>0;
+    const deep=o.cl<-2.5;
+    if(!deep){c.strokeStyle=COL[b];c.globalAlpha=.8;c.lineWidth=1.4;c.setLineDash([3,4]);
+      c.beginPath();c.moveTo(x,Math.min(y1,y2)+(op?(b==="sun"?sc*.07+4:Math.max(9,ppd*.95)+3):0));c.lineTo(x,Math.max(y1,y2));c.stroke();c.setLineDash([]);c.globalAlpha=1}
+    c.globalAlpha=1;c.strokeStyle="#eef3fb";c.lineWidth=2;c.beginPath();c.moveTo(x-9,y2);c.lineTo(x+9,y2);c.stroke();
+    c.fillStyle=COL[b];c.font="500 11px "+FM;
+    const lab=b.toUpperCase()+(deep?" BEHIND RIDGE ":" ")+(o.cl>=0?"+":"−")+Math.abs(o.cl).toFixed(1)+"°";
+    const tx=x>w-190?x-12-c.measureText(lab).width:x+12;
+    c.fillText(lab,tx,deep?y2-10:Math.min(y1,y2)+(Math.abs(y1-y2)>26?(Math.abs(y1-y2)/2+4):-10));
+  });
+  c.fillStyle="rgba(170,190,220,.45)";c.font="400 10px "+FM;
+  c.fillText("elevation exaggerated · skyline rebuilt from samples",8,h-10);
+  return body;
+}
+
+/* ---------- HUD ---------- */
+function buildPills(){
+  $("#pills").innerHTML=SITES.map(s=>'<button type="button" data-s="'+s+'" aria-pressed="'+(V.site===s)+'">'+s+'</button>').join("");
+  $("#pills").querySelectorAll("button").forEach(b=>b.addEventListener("click",()=>{V.site=b.dataset.s;buildPills();buildTL()}));
+}
+function buildTL(){
+  const s=V.site;
+  const lane=(b,y)=>stat(s,b).runs.map(r=>'<rect x="'+r[0]+'" y="'+y+'" width="'+(r[1]-r[0]+1)+'" height="7" fill="'+COL[b]+'"/>').join("");
+  $("#tlbar").innerHTML='<svg viewBox="0 0 '+N+' 24" preserveAspectRatio="none" aria-hidden="true"><rect y="3" width="'+N+'" height="7" fill="rgba(170,190,220,.12)"/><rect y="14" width="'+N+'" height="7" fill="rgba(170,190,220,.12)"/>'+lane("sun",3)+lane("earth",14)+'<rect id="ph" x="0" y="0" width="3" height="24" fill="#fff"/></svg>';
+}
+function hud(body){
+  const s=V.site,i=Math.round(V.t),so=isOpen(s,"sun",i),eo=isOpen(s,"earth",i);
+  let head,col;
+  if(so&&eo){head="Both in view";col=COL.both}else if(so){head="Sun in view";col=COL.sun}else if(eo){head="Earth in view";col=COL.earth}else{head="Both below the ridge";col="#ff9a86"}
+  const sub=so&&eo?"The Sun and Earth are both above the terrain skyline.":so?"Earth is hidden behind the terrain.":eo?"The Sun is hidden behind the terrain.":"Neither center clears the skyline at this hour.";
+  $("#status").innerHTML='<span style="color:'+col+'">'+head+'</span><small>'+s+' · '+sub+'</small>';
+  $("#clock").innerHTML=fmtDate(V.t)+'<small>UTC · hour '+(i+1)+' of '+N+'</small>';
+  const r=(b)=>'<div><i style="background:'+COL[b]+'"></i><span style="color:var(--mut)">'+b[0].toUpperCase()+b.slice(1)+'</span> <b>'+body[b].el.toFixed(2)+'°</b> <span style="color:var(--mut)">skyline</span> <b>'+body[b].hz.toFixed(2)+'°</b></div>';
+  $("#reads").innerHTML=r("sun")+r("earth");
+  const ph=$("#ph");if(ph)ph.setAttribute("x",clamp(V.t,0,N-1)-1);
+}
+
+/* ---------- verdict posters ---------- */
+const WORDS={
+  "MM-01":["A ridge that keeps both in sight","Earth stays above the skyline for most of the month, and the Sun shares that sky for the first half."],
+  "MMP-02":["A window that opens, then shuts","Both bodies are up together in a single stretch. For the rest of the month, the Sun is blocked."],
+  "NR-03":["Earth never clears the ridge","The Sun does rise here, but in this model Earth stays below the skyline for all 721 hours. Please verify this before relying on it."]
+};
+function buildPosters(){
+  $("#posters").innerHTML=SITES.map((s,k)=>{
+    const m=M(s,"bilinear"),b=stat(s,"both"),sn=stat(s,"sun"),ea=stat(s,"earth"),st=D.sites[s];
+    const row=(n,p,c)=>'<div class="br"><span>'+n+'</span><span class="t"><i style="--w:'+p+'%;background:'+c+'"></i></span><strong>'+p.toFixed(1)+'%</strong></div>';
+    const lane=(x,c)=>'<rect width="'+N+'" height="4" fill="rgba(170,190,220,.12)"/>'+stat(s,x).runs.map(r=>'<rect x="'+r[0]+'" width="'+(r[1]-r[0]+1)+'" height="4" fill="'+c+'"/>').join("");
+    let detail;
+    if(ea.open===0)detail="Sun open "+sn.open+" of "+N+" hours. Earth open 0.";
+    else detail="Both open "+b.open+" of "+N+" hours"+(b.wins?", longest run "+b.longest+" h, longest blocked stretch "+b.gap+" h.":".");
+    return '<article class="poster rv" data-k="'+k+'"><div><div class="big" data-to="'+m.both+'">0<sup>%</sup></div><p class="cap">of hours with both bodies in view</p></div>'+
+      '<div><p class="site">'+s+' · '+st.name+' · '+Math.abs(st.lat).toFixed(1)+'° S '+st.lon.toFixed(1)+'° E</p><h3>'+WORDS[s][0]+'</h3><p class="txt">'+WORDS[s][1]+'</p>'+
+      '<div class="bars">'+row("Sun",m.sun,COL.sun)+row("Earth",m.earth,COL.earth)+row("Both",m.both,COL.both)+'</div>'+
+      '<div class="strip"><svg viewBox="0 0 '+N+' 4" preserveAspectRatio="none" aria-hidden="true" style="height:4px;margin-bottom:3px">'+lane("sun",COL.sun)+'</svg><svg viewBox="0 0 '+N+' 4" preserveAspectRatio="none" aria-hidden="true" style="height:4px;margin-bottom:3px">'+lane("earth",COL.earth)+'</svg><svg viewBox="0 0 '+N+' 4" preserveAspectRatio="none" aria-hidden="true" style="height:4px">'+lane("both",COL.both)+'</svg><small><span>Nov 14</span><span>30 days · hourly</span><span>Dec 14</span></small></div>'+
+      '<p class="txt" style="font:400 12px/1.6 var(--fm);letter-spacing:.04em;color:var(--mut)">'+detail+'</p></div></article>';
+  }).join("");
+  const io=new IntersectionObserver(es=>es.forEach(e=>{
+    if(!e.isIntersecting)return;const el=e.target;el.classList.add("in");io.unobserve(el);
+    const big=el.querySelector(".big");if(big){const to=+big.dataset.to,t0=performance.now(),dur=REDUCED?1:1700;(function f(now){const k=clamp((now-t0)/dur,0,1),v=to*(1-Math.pow(1-k,3));big.firstChild.nodeValue=v.toFixed(1);if(k<1)requestAnimationFrame(f)})(t0)}
+  }),{threshold:.25});
+  document.querySelectorAll(".rv,.poster").forEach(el=>io.observe(el));
+}
+
+/* ---------- scroll engine ---------- */
+const secD=$("#descent"),secV=$("#view");
+function prog(sec){const r=sec.getBoundingClientRect(),range=r.height-window.innerHeight;return{p:clamp(-r.top/Math.max(1,range),0,1),vis:r.bottom>-50&&r.top<window.innerHeight+50,range:range,top:r.top+window.scrollY}}
+let playing=false,lastY=-1;
+function frame(now){
+  const time=now/1000,y=window.scrollY;
+  drawStarsBG(time,y);
+  const pd=prog(secD);
+  if(pd.vis){drawMoon(pd.p);updateBeats(pd.p)}
+  const pv=prog(secV);
+  if(pv.vis){V.t=pv.p*(N-1);const body=drawHorizon(time);hud(body);
+    if(playing){if(pv.p>=.999)setPlay(false);else window.scrollBy(0,pv.range/(50*60))}}
+  lastY=y;requestAnimationFrame(frame);
+}
+function setPlay(on){playing=on;$("#play").textContent=on?"Pause":"Play the month"}
+$("#play").addEventListener("click",()=>{if(!playing){const pv=prog(secV);if(pv.p>=.999)window.scrollTo(0,pv.top+2);else if(pv.p<=0)window.scrollTo(0,pv.top+2)}setPlay(!playing)});
+["wheel","touchstart","keydown"].forEach(ev=>window.addEventListener(ev,()=>{if(playing)setPlay(false)},{passive:true}));
+(function(){const bar=$("#tlbar");let drag=false;
+  const seek=e=>{const r=bar.getBoundingClientRect(),f=clamp((e.clientX-r.left)/r.width,0,1),pv=prog(secV);window.scrollTo(0,pv.top+f*pv.range)};
+  bar.addEventListener("pointerdown",e=>{drag=true;bar.setPointerCapture(e.pointerId);if(playing)setPlay(false);seek(e)});
+  bar.addEventListener("pointermove",e=>{if(drag)seek(e)});
+  bar.addEventListener("pointerup",()=>{drag=false});
+})();
+document.querySelectorAll(".nav a[href^='#']").forEach(a=>a.addEventListener("click",e=>{
+  const id=a.getAttribute("href").slice(1),el=document.getElementById(id);if(!el)return;e.preventDefault();
+  let top=el.getBoundingClientRect().top+window.scrollY;
+  if(id==="view"){top+=window.innerHeight*.5}
+  window.scrollTo({top:top,behavior:REDUCED?"auto":"smooth"});
+}));
+
+buildPills();buildTL();buildPosters();
+requestAnimationFrame(frame);
+})();
+</script>
+
+<!-- ADDITIVE MODULE: isolated coordinate explorer. It reads the same hourly Sun and Earth data as the cinematic scenes (window.SHEAR_DATA). -->
+<script>
+(function(){
+"use strict";
+const D=window.SHEAR_DATA,$=id=>document.getElementById(id);
+const latEl=$("cx-lat"),lonEl=$("cx-lon"),out=$("cx-results"),go=$("cx-go"),form=$("cx-form");
+if(!latEl||!lonEl||!out||!go)return;
+const reduced=!!(window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+const R=1737400,rad=Math.PI/180,HALF=1000,PIX=20;
+const COL={sun:"#ffb84d",earth:"#5aaeff",both:"#4fe0b0"};
+const MON=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+const DIRS=["N","NE","E","SE","S","SW","W","NW"];
+const T0=Date.UTC(2026,10,14);
+const pad=n=>String(n).padStart(2,"0");
+const stamp=i=>{const d=new Date(T0+i*36e5);return MON[d.getUTCMonth()]+" "+d.getUTCDate()+", "+pad(d.getUTCHours())+":00"};
+const compass=b=>DIRS[Math.round(b/45)%8];
+function fmtDist(m){if(m<1000)return Math.round(m)+" m";const k=m/1000;return (k<10?k.toFixed(2):k<100?k.toFixed(1):Math.round(k))+" km"}
+function fmtCoord(la,lo){return Math.abs(la).toFixed(4)+"° "+(la<0?"S":"N")+", "+lo.toFixed(4)+"° E"}
+
+if(!D||!D.sites){out.innerHTML='<div class="cx-res"><div class="cx-state n">DATA UNAVAILABLE</div><h3>The model data could not be loaded</h3><p>Please reload the page and try again.</p></div>';return}
+const refs=Object.keys(D.sites).map(id=>({id:id,st:D.sites[id]}));
+
+/* azimuthal-equidistant offset of a point from a reference sample (haversine distance, forward azimuth) */
+function offset(st,la,lo){
+  const p0=st.lat*rad,p=la*rad,dl=(lo-st.lon)*rad;
+  const a=Math.pow(Math.sin((p-p0)/2),2)+Math.cos(p0)*Math.cos(p)*Math.pow(Math.sin(dl/2),2);
+  const c=2*Math.asin(Math.min(1,Math.sqrt(a)));
+  const th=Math.atan2(Math.sin(dl)*Math.cos(p),Math.cos(p0)*Math.sin(p)-Math.sin(p0)*Math.cos(p)*Math.cos(dl));
+  const d=R*c;
+  return {d:d,x:d*Math.sin(th),y:d*Math.cos(th),brg:((th/rad)+360)%360};
+}
+
+/* hypothetical model: the measured skyline is assumed to hold nearby, and hours close to the skyline become "uncertain" */
+function model(st,d){
+  const n=D.n,measured=d<=PIX;
+  const tol=measured?0:0.05+0.05*st.slopeMax*(d/1000);
+  const lane={sun:new Uint8Array(n),earth:new Uint8Array(n),both:new Uint8Array(n)};
+  const cnt={sun:[0,0,0],earth:[0,0,0],both:[0,0,0]};
+  const fs=st.f.sun,fe=st.f.earth,fb=st.f.both;
+  for(let i=0;i<n;i++){
+    const cs=st.sunEl[i]-st.sunHz[i],ce=st.earthEl[i]-st.earthHz[i];
+    const C={sun:fs.charCodeAt(i)===49,earth:fe.charCodeAt(i)===49,both:fb.charCodeAt(i)===49};
+    const P={sun:C.sun,earth:C.earth,both:C.both},O={sun:C.sun,earth:C.earth,both:C.both};
+    if(!measured){
+      P.sun=C.sun&&cs>tol;P.earth=C.earth&&ce>tol;P.both=C.both&&P.sun&&P.earth;
+      O.sun=C.sun||cs>-tol;O.earth=C.earth||ce>-tol;O.both=C.both||(O.sun&&O.earth);
+    }
+    ["sun","earth","both"].forEach(k=>{
+      lane[k][i]=P[k]?2:(O[k]?1:0);
+      if(P[k])cnt[k][0]++;if(C[k])cnt[k][1]++;if(O[k])cnt[k][2]++;
+    });
+  }
+  let best=null,a=-1;
+  for(let i=0;i<=n;i++){const on=i<n&&fb.charCodeAt(i)===49;if(on&&a<0)a=i;if(!on&&a>=0){if(!best||i-a>best.len)best={a:a,b:i-1,len:i-a};a=-1}}
+  return {tol:tol,lane:lane,cnt:cnt,win:best,peakSun:Math.max.apply(null,st.sunEl),peakEarth:Math.max.apply(null,st.earthEl)};
+}
+
+function laneSvg(arr,color,label){
+  let r="",a=0;
+  for(let i=1;i<=arr.length;i++){
+    if(i===arr.length||arr[i]!==arr[a]){
+      if(arr[a]>0)r+='<rect x="'+a+'" width="'+(i-a)+'" height="6" fill="'+color+'" fill-opacity="'+(arr[a]===2?1:.38)+'"/>';
+      a=i;
+    }
+  }
+  return '<div class="cx-lane"><span>'+label+'</span><svg viewBox="0 0 '+arr.length+' 6" preserveAspectRatio="none" aria-hidden="true"><rect width="'+arr.length+'" height="6" fill="rgba(170,190,220,.12)"/>'+r+'</svg></div>';
+}
+function radar(id,x,y,measured){
+  const s=80/HALF,px=100+x*s,py=100-y*s;
+  let g="";[60,100,140].forEach(v=>{g+='<line class="rd-g" x1="'+v+'" y1="20" x2="'+v+'" y2="180"/><line class="rd-g" x1="20" y1="'+v+'" x2="180" y2="'+v+'"/>'});
+  return '<svg class="cx-radar'+(measured?' m':'')+'" viewBox="0 0 200 200" role="img" aria-label="Position of the entered point inside the 2 by 2 kilometer terrain patch of '+id+'">'+
+    '<rect class="rd-sq" x="20" y="20" width="160" height="160"/>'+g+
+    '<line class="rd-l" x1="100" y1="100" x2="'+px.toFixed(1)+'" y2="'+py.toFixed(1)+'"/>'+
+    '<circle class="rd-ref" cx="100" cy="100" r="3.5"/>'+
+    '<circle class="rd-ping" cx="'+px.toFixed(1)+'" cy="'+py.toFixed(1)+'" r="4"/>'+
+    '<circle class="rd-pt" cx="'+px.toFixed(1)+'" cy="'+py.toFixed(1)+'" r="4"/>'+
+    '<text class="rd-t" x="100" y="13" text-anchor="middle">N</text>'+
+    '<text class="rd-t" x="108" y="94">'+id+'</text></svg>';
+}
+const fact=(l,v)=>'<div><span>'+l+'</span><b>'+v+'</b></div>';
+
+function renderRef(ref,o){
+  const st=ref.st,measured=o.d<=PIX,m=model(st,o.d),n=D.n;
+  const pc=v=>v/n*100;
+  const fig=(k,cls,label)=>{
+    const c=m.cnt[k];
+    const sub=measured?c[1]+" of "+n+" hours":"range "+pc(c[0]).toFixed(1)+"–"+pc(c[2]).toFixed(1)+"%";
+    return '<div class="'+cls+'"><b>'+pc(c[1]).toFixed(1)+'%</b><span>'+label+'</span><em>'+sub+'</em></div>';
+  };
+  const conf=measured?"Measured sample":(m.tol<.25?"High":m.tol<.6?"Moderate":"Low");
+  const win=m.win?stamp(m.win.a)+" → "+stamp(m.win.b)+" UTC · "+m.win.len+" h":"No joint window in this patch model";
+  const where=measured?"At the reference pixel":fmtDist(o.d)+" "+compass(o.brg)+" ("+fmtDist(Math.abs(o.x))+(o.x>=0?" E":" W")+", "+fmtDist(Math.abs(o.y))+(o.y>=0?" N":" S")+")";
+  const lg=measured
+    ?'<span><i class="lg"></i>Open</span><span><i class="lg s0"></i>Blocked</span>'
+    :'<span><i class="lg"></i>Likely open</span><span><i class="lg s1"></i>Uncertain</span><span><i class="lg s0"></i>Blocked</span>';
+  const head=measured
+    ?['m','MEASURED REFERENCE POINT','Reference point · '+ref.id,'These coordinates fall on the sample point of '+ref.id+'. The percentages below come directly from the hourly model for 14 Nov to 14 Dec 2026 (UTC).']
+    :['h','HYPOTHETICAL ESTIMATE · INSIDE TERRAIN PATCH','Inside the '+ref.id+' patch · '+fmtDist(o.d)+' from the center','This point lies inside the 2 × 2 km terrain patch we collected around '+ref.id+'. The estimate below assumes that the patch\'s measured skyline still applies here, and it marks hours that are too close to call as uncertain.'];
+  out.dataset.k=head[0];
+  out.innerHTML='<div class="cx-res">'+
+    '<div class="cx-state '+head[0]+'">'+head[1]+'</div><h3>'+head[2]+'</h3>'+
+    '<div class="cx-grid"><div class="cx-radwrap">'+radar(ref.id,o.x,o.y,measured)+'<p class="cx-radcap">2 × 2 km patch · north is up</p></div>'+
+    '<div><p>'+head[3]+'</p><div class="cx-facts">'+
+      fact('Reference patch',ref.id+' · '+st.name)+
+      fact('Offset from center',where)+
+      fact('Horizon tolerance',measured?'None (measured sample)':'±'+m.tol.toFixed(2)+'° (assumed)')+
+      fact('Confidence',conf)+
+      fact('Longest joint window',win)+
+      fact('Peak elevation','Sun '+m.peakSun.toFixed(1)+'° · Earth '+m.peakEarth.toFixed(1)+'°')+
+    '</div></div></div>'+
+    '<div class="cx-figs">'+fig('sun','s','Sun in view')+fig('earth','e','Earth in view')+fig('both','b','Both in view')+'</div>'+
+    laneSvg(m.lane.sun,COL.sun,'Sun')+laneSvg(m.lane.earth,COL.earth,'Earth')+laneSvg(m.lane.both,COL.both,'Both')+
+    '<div class="cx-lanecap"><span>Nov 14</span><span>30 days · hourly · UTC</span><span>Dec 14</span></div>'+
+    '<div class="cx-legend2">'+lg+'</div>'+
+    (measured
+      ?'<p class="cx-caution">Experimental model. It is not a validated assessment of sunlight duration, communications access or landing safety.</p>'
+      :'<p class="cx-caution">This is a hypothetical estimate, not a prediction. The skyline was measured at the patch center only, so the real values at your point may differ. It is not a validated assessment of sunlight, communications access or landing safety.</p>'+
+       '<p class="cx-small">How the estimate works: the Sun and Earth directions come from JPL Horizons and shift by well under 0.1° across a 2 km patch, so they are kept as measured. The terrain skyline is the uncertain part. We widen the clearance margin by 0.05° + 0.05° × maximum slope × distance in kilometers, and hours that fall inside that margin are marked uncertain.</p>')+
+  '</div>';
+}
+
+function renderFar(la,lo,rows){
+  out.dataset.k="n";
+  const li=rows.map(r=>'<li><b>'+r.ref.id+'</b><span>'+r.ref.st.name+'</span><span>'+fmtDist(r.o.d)+' '+compass(r.o.brg)+'</span><span>Outside the patch</span></li>').join("");
+  out.innerHTML='<div class="cx-res"><div class="cx-state n">INSUFFICIENT DATA</div><h3>Sufficient data could not be provided</h3>'+
+    '<p>The coordinates '+fmtCoord(la,lo)+' are outside the three Artemis III terrain patches we collected. Without a measured terrain skyline here, we cannot estimate when the Sun or Earth would clear the horizon, so the explorer shows no visibility figures for this location.</p>'+
+    '<ul class="cx-near" aria-label="Distance to the collected patches">'+li+'</ul>'+
+    '<p class="cx-caution">Choose one of the reference points, or enter coordinates inside one of the 2 × 2 km patches, to see a measured result or a hypothetical estimate.</p></div>';
+}
+function renderInvalid(){
+  out.dataset.k="n";
+  out.innerHTML='<div class="cx-res"><div class="cx-state n">INVALID COORDINATES</div><h3>Please check your input</h3><p>Latitude must be between −90° and 90°, and east longitude must be between 0° and 360°.</p></div>';
+}
+function renderIdle(){
+  out.dataset.k="i";
+  out.innerHTML='<div class="cx-res"><div class="cx-state">AWAITING COORDINATES</div><h3>Enter a location to scan</h3>'+
+    '<p>Press “Analyze location” or choose a reference point. There are three possible outcomes:</p>'+
+    '<div class="cx-legend"><div class="m"><b>Measured</b><span>The point is on a reference sample. Results come straight from the hourly model.</span></div>'+
+    '<div class="h"><b>Hypothetical</b><span>The point is inside a 2 × 2 km terrain patch. We estimate a range and mark uncertain hours.</span></div>'+
+    '<div class="n"><b>Insufficient data</b><span>The point is anywhere else. We report that sufficient data could not be provided.</span></div></div></div>';
+}
+
+function compute(){
+  const la=Number(latEl.value),lo=Number(lonEl.value);
+  if(!latEl.value.trim()||!lonEl.value.trim()||!isFinite(la)||!isFinite(lo)||la<-90||la>90||lo<0||lo>360)return renderInvalid();
+  const rows=refs.map(ref=>({ref:ref,o:offset(ref.st,la,lo)})).sort((p,q)=>p.o.d-q.o.d);
+  const hit=rows.find(r=>Math.abs(r.o.x)<=HALF&&Math.abs(r.o.y)<=HALF&&r.o.d<=HALF*1.4143);
+  if(hit)renderRef(hit.ref,hit.o);else renderFar(la,lo,rows);
+}
+
+let token=0;
+function run(user){
+  const my=++token;
+  if(!user||reduced){compute();return}
+  go.disabled=true;out.setAttribute("aria-busy","true");out.dataset.k="s";
+  out.innerHTML='<div class="cx-scan"><b>Scanning surface model…</b><i></i><span>Comparing the entered point with the collected terrain patches</span></div>';
+  setTimeout(()=>{
+    if(my!==token)return;
+    try{compute()}finally{go.disabled=false;out.removeAttribute("aria-busy")}
+    const r=out.getBoundingClientRect();
+    if(r.bottom>window.innerHeight-10){
+      const c=document.querySelector(".cx-console").getBoundingClientRect();
+      window.scrollTo({top:Math.max(0,window.scrollY+c.top-90),behavior:"smooth"});
+    }
+  },750);
+}
+
+/* click and Enter drive the scan; the form never has to submit (sandboxed previews block form submission) */
+go.addEventListener("click",()=>run(true));
+[latEl,lonEl].forEach(el=>el.addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();run(true)}}));
+if(form)form.addEventListener("submit",e=>{e.preventDefault();run(true)});
+document.querySelectorAll("[data-cx-site]").forEach(b=>b.addEventListener("click",()=>{
+  const ref=refs.find(x=>x.id===b.dataset.cxSite);if(!ref)return;
+  latEl.value=ref.st.lat.toFixed(4);lonEl.value=ref.st.lon.toFixed(4);run(true);
+}));
+renderIdle();
+})();
+</script>
+
+
+<!-- CINEMATIC LAYER: scroll progress, timecode, letterbox bars, scene reveals and parallax. Does not touch the original scene code. -->
+<script>
+(function(){
+"use strict";
+const reduced=window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const reel=document.getElementById("reel"),tc=document.getElementById("tc"),tcT=document.getElementById("tcT");
+const tints=["79,224,176","255,184,77","255,122,102"];
+const chapters=[["top","Cold open"],["descent","Ch. 01 · Descent"],["view","Ch. 02 · The view"],["verdict","Ch. 03 · Verdict"],["coordinates","Ch. 04 · Coordinates"],["notes","Mission notes"],["end","End"]];
+const pad=n=>String(n).padStart(2,"0");
+// letterbox bars slide in after the title has settled
+setTimeout(()=>document.body.classList.add("cine-in"),reduced?0:2600);
+// poster tints
+document.querySelectorAll(".poster").forEach((p,i)=>p.style.setProperty("--tint",tints[i%3]));
+// reveal scenes that the original observer does not handle
+const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add("in");io.unobserve(e.target)}}),{threshold:.2});
+document.querySelectorAll(".cx,.notes").forEach(el=>io.observe(el));
+let ticking=false;
+function onScroll(){
+  if(ticking)return;ticking=true;
+  requestAnimationFrame(()=>{
+    ticking=false;
+    const y=window.scrollY,max=Math.max(1,document.documentElement.scrollHeight-window.innerHeight),f=clamp(y/max,0,1);
+    reel.style.transform="scaleX("+f+")";
+    const secs=Math.round(f*210);
+    let name=chapters[0][1];
+    for(const c of chapters){const el=document.getElementById(c[0]);if(el&&el.getBoundingClientRect().top<window.innerHeight*.5)name=c[1]}
+    tcT.textContent=name+" · "+pad(Math.floor(secs/60))+":"+pad(secs%60);
+    tc.classList.toggle("on",y>window.innerHeight*.6);
+    if(!reduced){
+      document.querySelectorAll(".poster").forEach(p=>{
+        const r=p.getBoundingClientRect();
+        if(r.bottom<0||r.top>window.innerHeight)return;
+        const k=(r.top+r.height/2-window.innerHeight/2)/window.innerHeight;
+        const big=p.querySelector(".big");
+        if(big)big.style.transform="translate3d(0,"+(k*-60)+"px,0) scale("+(1-Math.min(.06,Math.abs(k)*.06))+")";
+        p.style.setProperty("--gx",(50+k*40)+"%");
+      });
+    }
+  });
+}
+window.addEventListener("scroll",onScroll,{passive:true});
+window.addEventListener("resize",onScroll);
+onScroll();
+})();
+</script>
+
+
+<!-- NAVIGATION FIX: working chapter links on every screen size, a clickable data-check panel and a clickable scroll cue. -->
+<script>
+(function(){
+"use strict";
+const D=window.SHEAR_DATA,$=id=>document.getElementById(id);
+const reduced=!!(window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+const menuBtn=$("menuBtn"),mMenu=$("mMenu"),chk=$("chk"),panel=$("chkPanel");
+function goTo(id){
+  const el=document.getElementById(id);if(!el)return;
+  let top=el.getBoundingClientRect().top+window.scrollY;
+  if(id==="view")top+=window.innerHeight*.5;
+  window.scrollTo({top:top,behavior:reduced?"auto":"smooth"});
+}
+/* mobile chapter menu */
+function setMenu(on){
+  if(!mMenu||!menuBtn)return;
+  mMenu.hidden=!on;menuBtn.setAttribute("aria-expanded",on?"true":"false");menuBtn.textContent=on?"Close":"Menu";
+}
+if(menuBtn)menuBtn.addEventListener("click",()=>{setPanel(false);setMenu(mMenu.hidden)});
+document.querySelectorAll("[data-go]").forEach(a=>a.addEventListener("click",e=>{e.preventDefault();const id=a.dataset.go;setMenu(false);setTimeout(()=>goTo(id),60)}));
+
+/* data check panel: recounts every hourly flag and compares it with the summary table */
+function verify(){
+  const rows=[];let ok=!!(D&&D.sites&&D.methods);
+  if(ok)Object.keys(D.sites).forEach(id=>{
+    const st=D.sites[id],m=D.methods.find(r=>r.site===id&&r.method==="bilinear");
+    const cnt=k=>{let c=0;const s=st.f[k];for(let i=0;i<s.length;i++)if(s.charCodeAt(i)===49)c++;return c};
+    const s=cnt("sun"),e=cnt("earth"),b=cnt("both");
+    const pass=!!m&&st.f.sun.length===D.n&&st.f.earth.length===D.n&&st.f.both.length===D.n&&s===m.sunOpen&&e===m.earthOpen&&b===m.bothOpen;
+    ok=ok&&pass;rows.push({id:id,s:s,e:e,b:b,pass:pass});
+  });
+  return {ok:ok,rows:rows};
+}
+function buildPanel(){
+  const v=verify(),n=D&&D.n?D.n:0;
+  panel.innerHTML='<p class="k'+(v.ok?'':' no')+'">Data check · '+(v.ok?'passed':'failed')+'</p>'+
+    '<ul>'+v.rows.map(r=>'<li><b>'+r.id+'</b><span>'+n+' hourly samples</span><span>Sun '+r.s+' · Earth '+r.e+' · Both '+r.b+'</span><i class="'+(r.pass?'ok':'no')+'">'+(r.pass?'✓':'✗')+'</i></li>').join("")+'</ul>'+
+    '<p class="t">The page recounts every hourly visibility flag and compares it with the summary table. This confirms that the data is internally consistent. It does not validate the model against NASA products.</p>'+
+    '<button type="button" data-notes>Read the method notes ↗</button>';
+  const b=panel.querySelector("[data-notes]");
+  if(b)b.addEventListener("click",()=>{setPanel(false);goTo("notes")});
+}
+function setPanel(on){
+  if(!panel)return;
+  if(on&&!panel.innerHTML)buildPanel();
+  panel.hidden=!on;if(chk)chk.setAttribute("aria-expanded",on?"true":"false");
+}
+if(chk)chk.addEventListener("click",e=>{e.stopPropagation();setPanel(panel.hidden)});
+document.querySelectorAll("[data-open-check]").forEach(b=>b.addEventListener("click",e=>{e.stopPropagation();setMenu(false);setPanel(true)}));
+document.addEventListener("click",e=>{if(!panel.hidden&&!panel.contains(e.target))setPanel(false)});
+document.addEventListener("keydown",e=>{if(e.key==="Escape"){setPanel(false);setMenu(false)}});
+
+/* the scroll cue on the cold open becomes a real button */
+const cue=document.querySelector(".cue");
+if(cue){
+  cue.removeAttribute("aria-hidden");cue.setAttribute("role","button");cue.setAttribute("tabindex","0");cue.setAttribute("aria-label","Scroll to the descent");
+  cue.addEventListener("click",()=>goTo("descent"));
+  cue.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();goTo("descent")}});
+}
+
+/* highlight the current chapter in the top navigation */
+const ids=["descent","view","verdict","coordinates","notes"];
+let tick=false;
+function mark(){
+  if(tick)return;tick=true;
+  requestAnimationFrame(()=>{
+    tick=false;let cur="";
+    ids.forEach(id=>{const el=document.getElementById(id);if(el&&el.getBoundingClientRect().top<window.innerHeight*.5)cur=id});
+    document.querySelectorAll(".nav .links a").forEach(a=>a.classList.toggle("on",a.getAttribute("href")==="#"+cur));
+  });
+}
+window.addEventListener("scroll",mark,{passive:true});mark();
+})();
+</script>
+
+<!-- SHOW LAYER (additive): chapter title cards, anamorphic flare, pointer parallax, opt-in score. Data and existing scenes untouched. -->
+<style>
+.flare{position:absolute;left:-20%;width:140%;top:50%;height:2px;pointer-events:none;z-index:0;transform:scaleX(0);opacity:0;background:linear-gradient(90deg,transparent,rgba(90,174,255,.85),#fff,rgba(90,174,255,.85),transparent);box-shadow:0 0 50px 8px rgba(90,174,255,.35);animation:fsweep 3.6s 1.4s cubic-bezier(.2,.7,.2,1) forwards}
+@keyframes fsweep{0%{transform:scaleX(0);opacity:0}30%{transform:scaleX(1);opacity:.95}100%{transform:scaleX(1.15);opacity:0}}
+.cc{position:fixed;inset:0;z-index:56;display:grid;place-content:center;justify-items:center;text-align:center;pointer-events:none;opacity:0;background:radial-gradient(ellipse at center,rgba(3,5,10,.82),rgba(3,5,10,.55) 70%);transition:opacity .7s}
+.cc.on{opacity:1}
+.cc small{font:400 11px/1.6 var(--fm);letter-spacing:.34em;text-transform:uppercase;color:var(--earth)}
+.cc b{display:block;margin-top:14px;font:600 clamp(40px,9vw,128px)/1 var(--fd);text-transform:uppercase;letter-spacing:.7em;padding-left:.7em;filter:blur(12px);transition:letter-spacing 2s cubic-bezier(.2,.7,.2,1),filter 1.4s}
+.cc.on b{letter-spacing:.16em;padding-left:.16em;filter:none}
+.snd{position:fixed;left:max(20px,env(safe-area-inset-left,0px));bottom:max(16px,env(safe-area-inset-bottom,0px));z-index:51;all:unset;box-sizing:border-box;cursor:pointer;position:fixed;padding:9px 14px;border:1px solid var(--line);border-radius:99px;font:500 10.5px/1 var(--fm);letter-spacing:.16em;text-transform:uppercase;color:var(--ink2);background:rgba(3,5,10,.55);backdrop-filter:blur(6px)}
+body.cine-in .snd{bottom:calc(max(16px,env(safe-area-inset-bottom,0px)) + clamp(14px,3.4vh,40px))}
+.snd[aria-pressed="true"]{color:var(--ink);border-color:var(--earth)}
+.snd:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+#stars{will-change:transform;transition:transform .9s cubic-bezier(.2,.7,.2,1)}
+@media (prefers-reduced-motion:reduce){.flare{animation:none;opacity:0}.cc{display:none}#stars{transition:none}}
+</style>
+<script>
+(function(){
+"use strict";
+var RM=window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+var cold=document.querySelector(".cold");if(cold){var f=document.createElement("i");f.className="flare";f.setAttribute("aria-hidden","true");cold.appendChild(f)}
+/* score: generative drone, off until the viewer opts in */
+var ac=null,master=null,on=false,btn=document.createElement("button");
+btn.className="snd";btn.type="button";btn.setAttribute("aria-pressed","false");btn.textContent="Sound off";document.body.appendChild(btn);
+function prog(){var h=document.documentElement.scrollHeight-innerHeight;return h>0?Math.min(1,Math.max(0,scrollY/h)):0}
+function level(){return .05+.11*prog()}
+function build(){
+  var A=window.AudioContext||window.webkitAudioContext;if(!A)return false;
+  ac=new A();master=ac.createGain();master.gain.value=0;master.connect(ac.destination);
+  var lp=ac.createBiquadFilter();lp.type="lowpass";lp.frequency.value=260;lp.connect(master);
+  [[49,"sine",.5],[49.6,"sine",.5],[98.4,"triangle",.12],[146.9,"sine",.05]].forEach(function(o){var s=ac.createOscillator(),g=ac.createGain();s.type=o[1];s.frequency.value=o[0];g.gain.value=o[2];s.connect(g);g.connect(lp);s.start()});
+  var lfo=ac.createOscillator(),lg=ac.createGain();lfo.frequency.value=.07;lg.gain.value=90;lfo.connect(lg);lg.connect(lp.frequency);lfo.start();
+  var buf=ac.createBuffer(1,ac.sampleRate*2,ac.sampleRate),d=buf.getChannelData(0);for(var i=0;i<d.length;i++)d[i]=Math.random()*2-1;
+  var n=ac.createBufferSource();n.buffer=buf;n.loop=true;var bp=ac.createBiquadFilter();bp.type="bandpass";bp.frequency.value=420;var ng=ac.createGain();ng.gain.value=.018;n.connect(bp);bp.connect(ng);ng.connect(master);n.start();
+  return true;
+}
+function boom(){if(!on||!ac)return;var t=ac.currentTime,o=ac.createOscillator(),g=ac.createGain();o.type="sine";o.frequency.setValueAtTime(78,t);o.frequency.exponentialRampToValueAtTime(26,t+1.5);g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(.5,t+.03);g.gain.exponentialRampToValueAtTime(.001,t+1.7);o.connect(g);g.connect(master);o.start(t);o.stop(t+1.8)}
+btn.addEventListener("click",function(){
+  if(!ac&&!build())return;
+  on=!on;btn.setAttribute("aria-pressed",on);btn.textContent=on?"Sound on":"Sound off";
+  if(ac.state==="suspended")ac.resume();
+  master.gain.setTargetAtTime(on?level():0,ac.currentTime,.8);
+});
+addEventListener("scroll",function(){if(on&&master)master.gain.setTargetAtTime(level(),ac.currentTime,.6)},{passive:true});
+/* chapter title cards */
+var cc=document.createElement("div");cc.className="cc";cc.setAttribute("aria-hidden","true");cc.innerHTML="<small></small><b></b>";document.body.appendChild(cc);
+var CH={descent:["Chapter 01","Arrival"],view:["Chapter 02","The view"],verdict:["Chapter 03","Verdict"],coordinates:["Chapter 04","Coordinates"],notes:["Mission notes","Read first"]},seen={},busy=false;
+if(!RM&&"IntersectionObserver"in window){
+  var io=new IntersectionObserver(function(es){es.forEach(function(e){
+    var id=e.target.id;if(!e.isIntersecting||seen[id]||busy)return;seen[id]=1;busy=true;
+    cc.querySelector("small").textContent=CH[id][0];cc.querySelector("b").textContent=CH[id][1];
+    cc.classList.add("on");boom();
+    setTimeout(function(){cc.classList.remove("on");setTimeout(function(){busy=false},800)},1900);
+  })},{threshold:.18});
+  setTimeout(function(){Object.keys(CH).forEach(function(k){var s=document.getElementById(k);if(s)io.observe(s)})},3200);
+}
+/* pointer parallax on the star field */
+var st=document.getElementById("stars");
+if(st&&!RM&&matchMedia("(pointer:fine)").matches){var raf=0;addEventListener("pointermove",function(e){if(raf)return;raf=requestAnimationFrame(function(){raf=0;
+  var x=e.clientX/innerWidth-.5,y=e.clientY/innerHeight-.5;st.style.transform="translate("+(-x*14).toFixed(1)+"px,"+(-y*10).toFixed(1)+"px) scale(1.04)"})})}
+})();
+</script>
+
+</body></html>
